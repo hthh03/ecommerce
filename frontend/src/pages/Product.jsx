@@ -7,12 +7,11 @@ import RelatedProducts from '../components/RelatedProducts'
 const Product = () => {
   const {productId} = useParams();
   const {products, currency, addToCart } = useContext(ShopContext);
-  const [productData, setProductData] = useState(false); // Fixed typo: setProductĐata -> setProductData
+  const [productData, setProductData] = useState(false); 
   const [image, setImage] = useState('');
   const [size, setSize ] = useState('');
 
   const fetchProductData = async () => {
-    // Add safety check for products array
     if (!products || !Array.isArray(products)) {
       console.log('Products not loaded yet or invalid');
       return;
@@ -20,7 +19,7 @@ const Product = () => {
 
     products.map((item)=>{
       if (item._id === productId){
-        setProductData(item) // Fixed typo here too
+        setProductData(item) 
         setImage(item.image[0])
         return null;
       } 
@@ -39,7 +38,6 @@ const Product = () => {
         <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'> {/* Fixed missing gap value */}
           <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
             {
-              // Add safety check for productData.image
               productData.image && productData.image.map((item,index)=>(
                 <img onClick={()=>setImage(item)} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer'/>
               ))
@@ -53,12 +51,12 @@ const Product = () => {
         <div className='flex-1'>
           <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
           <div className='flex items-center gap-1 mt-2'>
-            <img src={assets.star_icon} alt="" className='w-3.5' /> {/* Fixed class name */}
+            <img src={assets.star_icon} alt="" className='w-3.5' /> 
             <img src={assets.star_icon}  alt="" className='w-3.5' />
             <img src={assets.star_icon}  alt="" className='w-3.5' />
             <img src={assets.star_icon}  alt="" className='w-3.5' />
             <img src={assets.star_icon}  alt="" className='w-3.5' />
-            <p className='pl-2'>(122)</p> {/* Fixed class name: PL-2 -> pl-2 */}
+            <p className='pl-2'>(122)</p>
           </div>
           <p className='mt-5 text-3xl font-medium'>{currency}{productData.price}</p>
           <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description} </p>

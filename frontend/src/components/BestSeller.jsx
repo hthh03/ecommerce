@@ -11,8 +11,7 @@ const BestSeller = () => {
     useEffect(()=>{
         const bestProduct = products.filter((item)=>(item.bestseller));
         setBestSeller(bestProduct.slice(0,5))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[])
+    },[products])
 
   return (
     <div className="my-10">
