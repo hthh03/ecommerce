@@ -49,7 +49,7 @@ const updateCart = async (req,res) => {
     }
 }
 
-// get  user cart data
+// get user cart data
 const getUserCart = async (req,res) => {
     try {
         const { userId } = req.body
