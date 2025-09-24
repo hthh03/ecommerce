@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema({
     cartData: {type: Object, default: {}},
     avatar: {type: String, default: ""},
     phone: {type: String, default: ""},      
-    address: {type: String, default: ""}
+    address: {type: String, default: ""},
+    resetRequired: { type: Boolean, default: false }
 
 },{minimize:false})
 

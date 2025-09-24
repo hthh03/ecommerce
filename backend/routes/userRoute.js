@@ -1,5 +1,5 @@
 import express from 'express';
-import { adminLogin, registerUser, loginUser, getProfile, updateProfile, changePassword } from '../controllers/userController.js'
+import { adminLogin, registerUser, loginUser, getProfile, updateProfile, changePassword, forgotPassword, resetPassword } from '../controllers/userController.js'
 import authUser from '../middleware/auth.js';
 import upload from "../middleware/upload.js";  
 
@@ -11,4 +11,6 @@ userRouter.post ('/admin', adminLogin)
 userRouter.get("/profile", authUser, getProfile);
 userRouter.put("/profile", authUser, upload.single("avatar"), updateProfile);
 userRouter.put("/change-password", authUser, changePassword);
+userRouter.post('/forgot-password', forgotPassword);
+userRouter.post('/reset-password', resetPassword);
 export default userRouter;

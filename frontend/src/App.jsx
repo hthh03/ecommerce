@@ -13,10 +13,13 @@ import Footer from './components/Footer'
 import SearchBar from './components/SearchBar'
 import Verify from './pages/Verify'
 import Profile from './pages/Profile'
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
  // eslint-disable-next-line no-unused-vars
 import { ToastContainer, toast } from 'react-toastify';
 
 const App = () => {
+  const backendUrl = "http://localhost:4000";
   return (
     <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
       <ToastContainer/>
@@ -34,6 +37,8 @@ const App = () => {
        <Route path='/orders' element={<Orders/>} />
        <Route path='/verify' element={<Verify/>} />
        <Route path='/profile' element={<Profile/>} />
+        <Route path="/forgot-password" element={<ForgotPassword backendUrl={backendUrl} />} />
+        <Route path="/reset-password" element={<ResetPassword backendUrl={backendUrl} />} />
       </Routes>
       <Footer/>
     </div>
