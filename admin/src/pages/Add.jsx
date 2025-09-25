@@ -160,32 +160,20 @@ const Add = ({ token }) => {
         </div>
       </div>
 
-      <div>
+     <div>
         <p className='mb-2 font-medium'>Available Sizes</p>
-        <div className='flex gap-2'>
-          {['S', 'M', 'L', 'XL', 'XXL'].map((size) => (
-            <div
-              key={size}
-              onClick={() =>
-                setSizes((prev) =>
-                  prev.includes(size)
-                    ? prev.filter((item) => item !== size)
-                    : [...prev, size]
-                )
-              }
-            >
-              <p
-                className={`${
-                  sizes.includes(size)
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-slate-200 text-gray-700'
-                } px-3 py-2 cursor-pointer rounded transition-colors hover:bg-blue-400`}
-              >
-                {size}
-              </p>
-            </div>
-          ))}
-        </div>
+        <input
+          type="text"
+          value={sizes.join(",")}
+          onChange={(e) =>
+            setSizes(e.target.value.split(",").map(s => s.trim()))
+          }
+          className='w-full max-w-[500px] px-3 py-2 border rounded focus:outline-none focus:border-blue-500'
+          placeholder="Enter sizes separated by comma (e.g. 16,17,18,19 or 40cm,45cm)"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Example: Ring → 16,17,18,19 | Necklace → 40cm,45cm
+        </p>
       </div>
 
       <div className='flex items-center gap-2'>
