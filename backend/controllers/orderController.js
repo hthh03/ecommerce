@@ -132,6 +132,30 @@ const userOrders = async (req, res) => {
     }
 };
 
+const removeOrder = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: "OrderId is required" });
+    }
+
+    const deletedOrder = await orderModel.findByIdAndDelete(orderId);
+
+    if (!deletedOrder) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Order deleted successfully",
+      data: deletedOrder
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Update order status (Admin only)
 const updateStatus = async (req, res) => {
     try {
@@ -144,4 +168,4 @@ const updateStatus = async (req, res) => {
     }
 };
 
-export { verifyStripe, placeOrder, placeOrderStripe, allOrders, userOrders, updateStatus };
+export { verifyStripe, placeOrder, placeOrderStripe, allOrders, userOrders, updateStatus, removeOrder};

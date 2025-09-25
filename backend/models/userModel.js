@@ -8,8 +8,9 @@ const userSchema = new mongoose.Schema({
     avatar: {type: String, default: ""},
     phone: {type: String, default: ""},      
     address: {type: String, default: ""},
-    resetRequired: { type: Boolean, default: false }
-
+    resetRequired: { type: Boolean, default: false },
+    blocked: { type: Boolean, default: false },
+    date: { type: Date, default: Date.now }
 },{minimize:false})
 
 const userModel = mongoose.models.user || mongoose.model('user',userSchema);

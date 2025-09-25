@@ -5,6 +5,7 @@ import { cloudinary } from "../config/cloudinary.js";
 import fs from "fs";
 import userModel from "../models/userModel.js";
 import nodemailer from "nodemailer";
+import orderModel from '../models/orderModel.js'
 
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -253,5 +254,85 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Get all users (Admin only)
+const listUsers = async (req, res) => {
+    try {
+        const users = await userModel.find({}).select('-password').sort({ date: -1 })
+        res.json({
+            success: true,
+            users
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({
+            success: false,
+            message: error.message
+        })
+    }
+}
 
-export { loginUser, registerUser, adminLogin, getProfile, updateProfile, changePassword, forgotPassword, resetPassword};
+// Block/Unblock user
+const blockUser = async (req, res) => {
+    try {
+        const { userId, block } = req.body
+        
+        await userModel.findByIdAndUpdate(userId, { blocked: block })
+        
+        res.json({
+            success: true,
+            message: block ? 'User blocked successfully' : 'User unblocked successfully'
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+// Delete user
+const deleteUser = async (req, res) => {
+    try {
+        const { userId } = req.body
+        
+        // Optional: Also delete user's orders
+        // await orderModel.deleteMany({ userId })
+        
+        await userModel.findByIdAndDelete(userId)
+        
+        res.json({
+            success: true,
+            message: 'User deleted successfully'
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+// Get user orders
+const getUserOrders = async (req, res) => {
+    try {
+        const { userId } = req.body
+        
+        const orders = await orderModel.find({ userId }).sort({ date: -1 })
+        
+        res.json({
+            success: true,
+            orders
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+export { loginUser, registerUser, adminLogin, getProfile, updateProfile, changePassword, forgotPassword, resetPassword,
+  listUsers, blockUser, deleteUser, getUserOrders};

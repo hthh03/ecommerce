@@ -80,4 +80,58 @@ const singleProduct = async (req,res) => {
     }
 }
 
-export {addProduct, listProducts, removeProduct, singleProduct}
+const updateProduct = async (req, res) => {
+    try {
+        const { id, name, description, price, category, subCategory, bestseller, sizes } = req.body;
+
+        // Tìm product cần update
+        const product = await productModel.findById(id);
+        if (!product) {
+            return res.json({ success: false, message: "Product not found" });
+        }
+
+        // Prepare update data
+        const updateData = {
+            name,
+            description, 
+            price: Number(price),
+            category,
+            subCategory,
+            bestseller: bestseller === "true" ? true : false,
+            sizes: JSON.parse(sizes),
+            date: Date.now()
+        };
+
+        // Handle image updates với Cloudinary
+        let imagesUrl = [...product.image]; // Keep existing images
+
+        // Check for new images
+        const image1 = req.files.image1 && req.files.image1[0];
+        const image2 = req.files.image2 && req.files.image2[0];
+        const image3 = req.files.image3 && req.files.image3[0];
+        const image4 = req.files.image4 && req.files.image4[0];
+
+        const newImages = [image1, image2, image3, image4];
+
+        // Upload new images to cloudinary
+        for (let i = 0; i < newImages.length; i++) {
+            if (newImages[i]) {
+                let result = await cloudinary.uploader.upload(newImages[i].path, {resource_type: 'image'});
+                imagesUrl[i] = result.secure_url;
+            }
+        }
+
+        updateData.image = imagesUrl;
+
+        // Update product in database
+        const updatedProduct = await productModel.findByIdAndUpdate(id, updateData, { new: true });
+
+        res.json({ success: true, message: "Product updated successfully", product: updatedProduct });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export {addProduct, listProducts, removeProduct, singleProduct, updateProduct}
