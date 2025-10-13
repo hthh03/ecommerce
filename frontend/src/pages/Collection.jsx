@@ -20,7 +20,6 @@ const Collection = () => {
   const [filterProducts, setFilterProducts] = useState([]);
   const [sortType, setSortType] = useState('relevant');
 
-  // Toggle category selection
   const toggleCategory = (e) => {
     const value = e.target.value;
     if (category.includes(value)) {
@@ -30,7 +29,6 @@ const Collection = () => {
     }
   }
 
-  // Toggle subCategory selection
   const toggleSubCategory = (e) => {
     const value = e.target.value;
     if (subCategory.includes(value)) {
@@ -40,7 +38,6 @@ const Collection = () => {
     }
   }
 
-  // Apply filter based on category, subCategory, search
   const applyFilter = () => {
     let filtered = products.slice();
 
@@ -59,7 +56,6 @@ const Collection = () => {
     setFilterProducts(filtered);
   }
 
-  // Sort products
   const sortProduct = () => {
     let fpCopy = filterProducts.slice();
     switch (sortType) {
@@ -75,12 +71,10 @@ const Collection = () => {
     }
   }
 
-  // Re-apply filter when dependencies change
   useEffect(() => {
     applyFilter();
   }, [category, subCategory, search, showSearch, products]);
 
-  // Sort products when sort type changes
   useEffect(() => {
     sortProduct();
   }, [sortType]);
@@ -88,7 +82,6 @@ const Collection = () => {
   return (
     <div className='flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t'>
 
-      {/* Filter Column */}
       <div className='min-w-60'>
         <p 
           onClick={() => setShowFilter(!showFilter)} 
@@ -97,7 +90,6 @@ const Collection = () => {
         </p>
         <img className={`h-3 sm:hidden ${showFilter ? 'rotate-90' : ''}`} src={assets.dropdown_icon} alt=""/>
 
-        {/* Category Filter */}
         <div className={`border border-gray-300 pl-5 py-3 mt-6 ${showFilter ? '' :'hidden'} sm:block`}>
           <p className='mb-3 text-sm font-medium'>CATEGORIES</p>
           <div className='flex flex-col gap-2 text-sm font-light text-gray-700'>
@@ -116,7 +108,6 @@ const Collection = () => {
           </div>
         </div>
 
-        {/* SubCategory Filter */}
         <div className={`border border-gray-300 pl-5 py-3 my-5 ${showFilter ? '' :'hidden'} sm:block`}>
           <p className='mb-3 text-sm font-medium'>TYPE</p>
           <div className='flex flex-col gap-2 text-sm font-light text-gray-700'>
@@ -136,12 +127,10 @@ const Collection = () => {
         </div>
       </div>
 
-      {/* Products Section */}
       <div className='flex-1'>
         <div className='flex justify-between text-base sm:text-2xl mb-4'>
           <Title text1={'ALL'} text2={'COLLECTIONS'}/>
           
-          {/* Product Sort */}
           <select 
             onChange={(e) => setSortType(e.target.value)} 
             className='border-2 border-gray-300 text-sm px-2'>
@@ -150,8 +139,6 @@ const Collection = () => {
             <option value="high-low">Sort by: High to Low</option>
           </select>
         </div>
-
-        {/* Product Grid */}
         <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6'>
           {filterProducts.map((item, index) => (
             <ProductItem 

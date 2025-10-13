@@ -154,7 +154,7 @@ const Add = ({ token }) => {
             value={price}
             className='w-full px-3 py-2 sm:w-[120px] border rounded focus:outline-none focus:border-blue-500'
             type='number'
-            step='0.01'  // 🔹 THÊM DÒNG NÀY
+            step='0.01' 
             placeholder='25.99'
             min='0'
             required

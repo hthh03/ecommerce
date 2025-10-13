@@ -34,7 +34,6 @@ const Orders = () => {
     setExpandedOrder(expandedOrder === index ? null : index);
   };
 
-  // 🔹 NEW: Cancel Order Function
   const handleCancelOrder = async () => {
     if (!selectedOrder || !cancelReason.trim()) {
       toast.error("Please provide a cancellation reason");
@@ -62,7 +61,7 @@ const Orders = () => {
         setShowCancelModal(false);
         setCancelReason("");
         setSelectedOrder(null);
-        loadOrderData(); // Reload orders
+        loadOrderData(); 
       } else {
         toast.error(response.data.message);
       }
@@ -73,7 +72,6 @@ const Orders = () => {
     }
   };
 
-  // 🔹 NEW: Check Refund Status
   const checkRefundStatus = async (orderId) => {
     try {
       const response = await axios.post(
@@ -122,13 +120,11 @@ const Orders = () => {
     setSelectedOrder(null);
   };
 
-  // Check if order can be cancelled
   const canCancelOrder = (order) => {
     const cancelableStatuses = ['Order Placed', 'Packing'];
     return !order.cancelled && cancelableStatuses.includes(order.status);
   };
 
-  // Get status color
   const getStatusColor = (status, cancelled) => {
     if (cancelled) return 'bg-red-100 text-red-700';
     
@@ -220,9 +216,12 @@ const Orders = () => {
                 </span>
 
                 {/* Total */}
-                <p className="text-lg font-bold text-gray-800">
-                  Total: {currency} {getOrderTotal(order.items) + delivery_fee}
-                </p>
+                <div className="flex justify-between text-lg font-bold border-t pt-2">
+                  <span>Total:</span>
+                  <span>
+                    {currency} {(getOrderTotal(order.items) + delivery_fee).toFixed(2)}
+                  </span>
+                </div>
 
                 {/* Action Buttons */}
                 <div className="flex gap-2">
@@ -281,7 +280,7 @@ const Orders = () => {
                 <div className="border-t pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal:</span>
-                    <span>{currency} {getOrderTotal(order.items)}</span>
+                    <span>{currency} {(getOrderTotal(order.items)).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Delivery Fee:</span>
@@ -289,7 +288,9 @@ const Orders = () => {
                   </div>
                   <div className="flex justify-between text-lg font-bold border-t pt-2">
                     <span>Total:</span>
-                    <span>{currency} {getOrderTotal(order.items) + delivery_fee}</span>
+                    <span>
+                      {currency} {(getOrderTotal(order.items) + delivery_fee).toFixed(2)}
+                    </span>
                   </div>
                 </div>
 

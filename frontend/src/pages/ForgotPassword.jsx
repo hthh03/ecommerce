@@ -16,7 +16,7 @@ const ForgotPassword = () => {
       const res = await axios.post(`${backendUrl}/api/user/forgot-password`, { email });
       if (res.data.success) {
         toast.success("A temporary password has been sent to your email!");
-        localStorage.setItem("resetEmail", email); // lưu email để ResetPassword dùng
+        localStorage.setItem("resetEmail", email); 
         setTimeout(() => navigate("/reset-password"), 1500);
       } else {
         toast.error(res.data.message || "Something went wrong");

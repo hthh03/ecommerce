@@ -18,7 +18,9 @@ const BestSeller = () => {
         <div className="text-center text-3xl py-8">
             <Title text1={'BEST'} text2={'SELLERS'}/>
             <p className="w-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600">
-            Lorem Ipsum is to.... 
+            Step into the world of <span className="font-medium text-pink-600">luxury & elegance</span> with Flora Gems. 
+            Our bestsellers are handpicked pieces that combine artistry, sparkle, 
+            and timeless design — treasures loved by our customers worldwide.
             </p>
         </div>
 

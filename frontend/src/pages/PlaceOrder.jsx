@@ -24,14 +24,12 @@ const PlaceOrder = () => {
     phone: ''
   });
 
-  // 🔹 NEW: Utility function to fix floating point precision
  const formatPrice = (price) => {
   const num = parseFloat(price);
   if (isNaN(num)) return 0;
   return Math.round(num * 100) / 100;
 };
 
-  // 🔹 NEW: Safe calculation of total amount
   const getTotalAmount = () => {
     const cartTotal = getCartAmount();
     const total = cartTotal + delivery_fee;
@@ -72,15 +70,12 @@ const PlaceOrder = () => {
             if (itemInfo) {
               itemInfo.size = item;
               itemInfo.quantity = cartItems[items][item];
-              // 🔹 IMPORTANT: Ensure price is properly formatted
               itemInfo.price = formatPrice(itemInfo.price);
               orderItems.push(itemInfo);
             }
           }
         }
       }
-
-      // Check if cart is empty
       if (orderItems.length === 0) {
         toast.error('Your cart is empty');
         return;
@@ -89,10 +84,9 @@ const PlaceOrder = () => {
       const orderData = {
         address: formData,
         items: orderItems,
-        amount: getTotalAmount(), // 🔹 Use safe calculation
+        amount: getTotalAmount(), 
       };
 
-      // Debug log to check amounts
       console.log('Order Data:', {
         cartAmount: getCartAmount(),
         deliveryFee: delivery_fee,
@@ -105,7 +99,6 @@ const PlaceOrder = () => {
       });
 
       switch (method) {
-        //API Calls for COD
         case 'cod': {
           const response = await axios.post(backendUrl + '/api/order/place', orderData, { headers: { token } });
           if (response.data.success) {
@@ -122,13 +115,12 @@ const PlaceOrder = () => {
           const responseStripe = await axios.post(backendUrl + '/api/order/stripe', orderData, {
             headers: { 
               token,
-              origin: window.location.origin // Add origin for redirect URLs
+              origin: window.location.origin 
             }
           });
           
           if (responseStripe.data.success) {
             const { session_url } = responseStripe.data;
-            // Show loading message before redirect
             toast.info('Redirecting to payment...');
             window.location.replace(session_url);
           } else {
@@ -153,7 +145,7 @@ const PlaceOrder = () => {
 
   return (
     <form onSubmit={onSubmitHandler} className="flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t">
-      {/* Left Side */}
+
       <div className="flex flex-col gap-4 w-full sm:max-w-[480px]">
         <div className="text-xl sm:text-2xl my-3">
           <Title text1={'DELIVERY'} text2={'INFORMATION'} />
@@ -247,7 +239,6 @@ const PlaceOrder = () => {
         />
       </div>
 
-      {/* Right Side */}
       <div className="mt-8">
         <div className="mt-8 min-w-80">
           <CartTotal />
@@ -271,7 +262,6 @@ const PlaceOrder = () => {
             </div>
           </div>
           
-          {/* Payment method validation message */}
           {!method && (
             <p className="text-red-500 text-sm mt-2">Please select a payment method</p>
           )}

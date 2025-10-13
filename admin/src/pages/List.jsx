@@ -11,11 +11,11 @@ const ProductManager = ({token}) => {
   const [editMode, setEditMode] = useState(false)
   const [selectedSubCategory, setSelectedSubCategory] = useState("All")
 
-  // Edit form states
   const [image1, setImage1] = useState(false)
   const [image2, setImage2] = useState(false)
   const [image3, setImage3] = useState(false)
   const [image4, setImage4] = useState(false)
+
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("")
@@ -71,7 +71,6 @@ const ProductManager = ({token}) => {
     setSelectedProduct(product)
     setEditMode(true)
     
-    // Populate form with product data
     setName(product.name)
     setDescription(product.description)
     setPrice(product.price.toString())
@@ -80,7 +79,6 @@ const ProductManager = ({token}) => {
     setBestseller(product.bestseller)
     setSizes(product.sizes)
     
-    // Reset images
     setImage1(false)
     setImage2(false)
     setImage3(false)
@@ -114,7 +112,6 @@ const ProductManager = ({token}) => {
         setEditMode(false)
         setSelectedProduct(null)
         await fetchList()
-        // Reapply filter after update
         filterBySubCategory(selectedSubCategory)
       } else {
         toast.error(response.data.message)
@@ -149,7 +146,6 @@ const ProductManager = ({token}) => {
     filterBySubCategory(selectedSubCategory)
   }, [list])
 
-  // Get product count by subcategory
   const getProductCount = (subCat) => {
     if (subCat === "All") return list.length
     return list.filter(item => item.subCategory === subCat).length
@@ -158,9 +154,7 @@ const ProductManager = ({token}) => {
   return (
     <div className="p-4 sm:p-6">
       {!editMode ? (
-        // Product List View with Subcategory Filter
         <div>
-          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
             <h1 className="text-xl sm:text-2xl font-bold">Product Management</h1>
             <div className="text-sm text-gray-600 bg-gray-100 px-3 py-2 rounded-lg">
@@ -169,7 +163,6 @@ const ProductManager = ({token}) => {
             </div>
           </div>
 
-          {/* Subcategory Filter Tabs */}
           <div className="mb-6 border-b pb-4">
             <div className="flex flex-wrap gap-2">
               {subCategories.map((subCat) => (
@@ -239,7 +232,7 @@ const ProductManager = ({token}) => {
             {filteredList.length > 0 ? (
               filteredList.map((item, index) => (
                 <div key={index} className="bg-white p-4 rounded-lg shadow border hover:shadow-md transition-shadow">
-                  {/* Card Header */}
+          
                   <div className="flex gap-4 mb-4">
                     <img className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg flex-shrink-0" src={item.image[0]} alt={item.name}/>
                     <div className="flex-1 min-w-0">
@@ -269,7 +262,7 @@ const ProductManager = ({token}) => {
                       onClick={() => selectProductForEdit(item)}
                       className="flex-1 bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600 transition-colors"
                     >
-                      Edit Product
+                      Edit 
                     </button>
                     <button 
                       onClick={() => removeProduct(item._id)}
@@ -291,7 +284,6 @@ const ProductManager = ({token}) => {
       ) : (
         // Edit Form View
         <div>
-          {/* Edit Header */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
             <div className="flex-1">
               <h2 className="text-lg sm:text-xl font-semibold">Edit Product</h2>
@@ -418,7 +410,9 @@ const ProductManager = ({token}) => {
               <input
                 type="text"
                 value={sizes.join(",")}
-                onChange={(e) => setSizes(e.target.value.split(",").map(s => s.trim()).filter(s => s !== ''))}
+                 onChange={(e) =>
+                    setSizes(e.target.value.split(",").map(s => s.trim()))
+                  }
                 className='w-full max-w-full sm:max-w-[500px] px-3 py-2 border rounded focus:outline-none focus:border-blue-500 text-sm'
                 placeholder="Enter sizes separated by comma (e.g. 16,17,18,19 or 40cm,45cm)"
               />

@@ -62,8 +62,7 @@ const Orders = ({ token }) => {
       toast.error(error.message);
     }
   };
-
-  // 🔹 NEW: Cancel Order Function
+  
   const handleCancelOrder = async () => {
     if (!selectedOrder || !cancelReason.trim()) {
       toast.error("Please provide a cancellation reason");
@@ -100,7 +99,6 @@ const Orders = ({ token }) => {
     }
   };
 
-  // 🔹 NEW: Check Refund Status
   const checkRefundStatus = async (orderId) => {
     try {
       const response = await axios.post(
@@ -150,7 +148,6 @@ const Orders = ({ token }) => {
               order.cancelled ? 'border-l-4 border-red-500 bg-red-50' : ''
             }`}
           >
-            {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <img
@@ -170,7 +167,6 @@ const Orders = ({ token }) => {
               </span>
             </div>
 
-            {/* Cancelled Badge */}
             {order.cancelled && (
               <div className="mb-4 p-2 bg-red-100 border border-red-200 rounded">
                 <p className="text-red-800 text-sm font-medium">
@@ -187,7 +183,6 @@ const Orders = ({ token }) => {
               </div>
             )}
 
-            {/* Items */}
             <div className="mb-4">
               <h4 className="font-semibold text-sm mb-2">Products:</h4>
               <div className="space-y-1">
@@ -200,7 +195,6 @@ const Orders = ({ token }) => {
               </div>
             </div>
 
-            {/* Payment & Amount */}
             <div className="mb-4">
               <p className="text-sm">
                 Payment Method:{" "}
@@ -217,7 +211,6 @@ const Orders = ({ token }) => {
                 {currency} {order.amount}
               </p>
 
-              {/* Refund Info */}
               {order.refund && (
                 <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
                   <p className="text-blue-800 text-xs font-medium">
@@ -230,7 +223,6 @@ const Orders = ({ token }) => {
               )}
             </div>
 
-            {/* Status */}
             {!order.cancelled && (
               <div className="mb-4">
                 <label className="text-sm font-medium block mb-1">
@@ -250,9 +242,7 @@ const Orders = ({ token }) => {
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex justify-between gap-2">
-              {/* Cancel Button - Only show for non-cancelled orders */}
               {!order.cancelled && 
                ['Order Placed', 'Packing'].includes(order.status) && (
                 <button
@@ -263,7 +253,6 @@ const Orders = ({ token }) => {
                 </button>
               )}
 
-              {/* Refund Status Button - Only show for Stripe orders with refund */}
               {order.refund && order.paymentMethod === 'Stripe' && (
                 <button
                   onClick={() => checkRefundStatus(order._id)}
@@ -273,7 +262,6 @@ const Orders = ({ token }) => {
                 </button>
               )}
 
-              {/* Delete Button */}
               <button
                 onClick={() => deleteOrder(order._id)}
                 className="px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600"
@@ -289,17 +277,16 @@ const Orders = ({ token }) => {
         <p className="text-gray-500 text-center mt-10">No orders available.</p>
       )}
 
-      {/* 🔹 Cancel Modal */}
       {showCancelModal && (
         <div className="modal-overlay">
           <div className="modal-container">
-            {/* Header */}
+          
             <div className="modal-header">
               <h3 className="modal-title">Cancel Order</h3>
             </div>
             
             <div className="modal-body">
-              {/* Order Info */}
+            
               <div className="order-info">
                 <p className="text-sm font-medium text-gray-700 mb-1">
                   Order ID: <span className="text-blue-600">#{selectedOrder?._id.slice(-6)}</span>
@@ -312,7 +299,6 @@ const Orders = ({ token }) => {
                 </p>
               </div>
 
-              {/* Refund Notice */}
               {selectedOrder?.paymentMethod === 'Stripe' && selectedOrder?.payment && (
                 <div className="refund-notice">
                   <p className="refund-notice-title">
@@ -324,7 +310,6 @@ const Orders = ({ token }) => {
                 </div>
               )}
 
-              {/* Reason Input */}
               <div>
                 <label className="form-label required">
                   Cancellation Reason:
@@ -338,8 +323,7 @@ const Orders = ({ token }) => {
                 />
               </div>
             </div>
-
-            {/* Actions */}
+            
             <div className="modal-actions">
               <button
                 onClick={closeCancelModal}

@@ -3,7 +3,7 @@ import userModel from "../models/userModel.js";
 import Stripe from 'stripe';
 
 // global variables
-const currency = 'inr';
+const currency = 'usd';
 const deliveryCharge = 10;
 
 // gateway initialize 
@@ -12,7 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // Place order using COD
 const placeOrder = async (req, res) => {
     try {
-        const userId = req.userId;   // 🔹 lấy từ authUser
+        const userId = req.userId;   
         const { items, amount, address } = req.body;
 
         const orderData = {
@@ -59,27 +59,28 @@ const placeOrderStripe = async (req, res) => {
 
         const line_items = items.map((item) => ({
             price_data: {
-                currency: currency,
+                currency: 'usd',
                 product_data: { name: item.name },
-                unit_amount: Math.round(parseFloat(item.price) * 100)  // 🔹 FIX: Math.round + parseFloat
+                unit_amount: Math.round(parseFloat(item.price) * 100)  
             },
             quantity: item.quantity
         }));
 
         line_items.push({
             price_data: {
-                currency: currency,
+                currency: 'usd',
                 product_data: { name: 'Delivery Charges' },
-                unit_amount: Math.round(deliveryCharge * 100)  // 🔹 FIX: Math.round
+                unit_amount: Math.round(deliveryCharge * 100)  
             },
             quantity: 1
         });
 
         const session = await stripe.checkout.sessions.create({
             success_url: `${origin}/verify?success=true&orderId=${newOrder._id}`,
-            cancel_url: `${origin}/verify?success=false&orderId=${newOrder._id}`,
+            cancel_url: `${origin}/place-order`,
             line_items,
             mode: 'payment',
+            locale: 'en',  
             metadata: {
                 orderId: newOrder._id.toString()
             }
@@ -95,14 +96,13 @@ const placeOrderStripe = async (req, res) => {
 // Verify Stripe
 const verifyStripe = async (req, res) => {
     const { orderId, success } = req.body;
-    const userId = req.userId;   // 🔹 lấy từ authUser
+    const userId = req.userId;   
 
     try {
         if (success === 'true') {
             // Lấy thông tin session để lưu payment_intent_id
             const order = await orderModel.findById(orderId);
             if (order) {
-                // Cập nhật order với payment = true
                 await orderModel.findByIdAndUpdate(orderId, { 
                     payment: true,
                     status: 'Order Placed'
@@ -120,11 +120,11 @@ const verifyStripe = async (req, res) => {
     }
 };
 
-// 🔹 NEW: Cancel Order Function
+// Cancel Order Function
 const cancelOrder = async (req, res) => {
     try {
         const { orderId, reason } = req.body;
-        const userId = req.userId; // For user cancellation
+        const userId = req.userId; 
         
         // Tìm order
         const order = await orderModel.findById(orderId);
@@ -135,7 +135,6 @@ const cancelOrder = async (req, res) => {
             });
         }
 
-        // Kiểm tra quyền cancel (user chỉ có thể cancel order của mình)
         if (userId && order.userId !== userId) {
             return res.status(403).json({ 
                 success: false, 
@@ -143,7 +142,6 @@ const cancelOrder = async (req, res) => {
             });
         }
 
-        // Kiểm tra trạng thái order có thể cancel được không
         const cancelableStatuses = ['Order Placed', 'Packing'];
         if (!cancelableStatuses.includes(order.status)) {
             return res.status(400).json({ 
@@ -154,24 +152,21 @@ const cancelOrder = async (req, res) => {
 
         let refundResult = null;
 
-        // Nếu đã thanh toán bằng Stripe, thực hiện hoàn tiền
         if (order.paymentMethod === 'Stripe' && order.payment) {
             try {
-                // Tìm payment intent từ Stripe
+
                 const sessions = await stripe.checkout.sessions.list({
                     limit: 100,
                 });
 
-                // Tìm session có metadata.orderId khớp
                 const session = sessions.data.find(s => 
                     s.metadata && s.metadata.orderId === orderId
                 );
 
                 if (session && session.payment_intent) {
-                    // Thực hiện refund
                     const refund = await stripe.refunds.create({
                         payment_intent: session.payment_intent,
-                        amount: order.amount * 100, // Convert to cents
+                        amount: order.amount * 100, 
                         reason: 'requested_by_customer',
                         metadata: {
                             orderId: orderId,
@@ -195,7 +190,6 @@ const cancelOrder = async (req, res) => {
             }
         }
 
-        // Cập nhật order status và thông tin cancel
         const updateData = {
             status: 'Cancelled',
             cancelled: true,
@@ -224,7 +218,7 @@ const cancelOrder = async (req, res) => {
     }
 };
 
-// 🔹 NEW: Check Refund Status
+// Check Refund Status
 const checkRefundStatus = async (req, res) => {
     try {
         const { orderId } = req.body;
@@ -244,12 +238,9 @@ const checkRefundStatus = async (req, res) => {
                 refund: null
             });
         }
-
-        // Kiểm tra status từ Stripe
         try {
             const refund = await stripe.refunds.retrieve(order.refund.refundId);
             
-            // Cập nhật status trong database nếu có thay đổi
             if (refund.status !== order.refund.status) {
                 await orderModel.findByIdAndUpdate(orderId, {
                     'refund.status': refund.status
@@ -299,7 +290,7 @@ const allOrders = async (req, res) => {
 // Orders of logged-in user
 const userOrders = async (req, res) => {
     try {
-        const userId = req.userId;   // 🔹 lấy từ authUser
+        const userId = req.userId;   
         const orders = await orderModel.find({ userId });
         res.json({ success: true, orders });
     } catch (error) {
@@ -352,6 +343,6 @@ export {
     userOrders, 
     updateStatus, 
     removeOrder,
-    cancelOrder,      // 🔹 NEW
-    checkRefundStatus // 🔹 NEW
+    cancelOrder,      
+    checkRefundStatus 
 };

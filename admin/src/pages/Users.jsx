@@ -47,7 +47,7 @@ const Users = ({token}) => {
   }
 
   const deleteUser = async (userId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
+    if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         const response = await axios.post(backendUrl + '/api/user/delete', {userId}, {headers:{token}})
         if (response.data.success) {

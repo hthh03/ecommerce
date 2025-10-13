@@ -6,7 +6,7 @@ import CartTotal from '../components/CartTotal';
 
 const Cart = () => {
 
-  const {products, currency, cartItems, updateQuantity, navigate } = useContext(ShopContext);
+  const {products, currency, cartItems, updateQuantity, navigate, token } = useContext(ShopContext);
 
   const [ cartData, setCartData ] = useState([]);
 
@@ -27,6 +27,16 @@ const Cart = () => {
     setCartData(tempData);
   }
     },[cartItems,products])
+
+  const handleCheckout = () => {
+    if (cartData.length === 0) return;
+    
+    if (!token) {
+      navigate('/login');
+    } else {
+      navigate('/place-order');
+    }
+  }
 
   return (
     <div className='border-t pt-14'>
@@ -51,7 +61,13 @@ const Cart = () => {
                   </div>
                 </div>
               </div>
-              <input onChange={(e)=> e.target.value === '' || e.target.value === '0' ? null : updateQuantity(item._id,item.size,Number(e.target.value))}className='border max-w-10 sm:max-w-20 px-1 sm:px-2 py-1' type='number' min={1} defaultValue={item.quantity}/>
+              <input 
+                  onChange={(e)=> e.target.value === '' || e.target.value === '0' ? null : updateQuantity(item._id,item.size,Number(e.target.value))}
+                  className='border max-w-10 sm:max-w-20 px-1 sm:px-2 py-1' 
+                  type='number' 
+                  min={1} 
+                  defaultValue={item.quantity}
+                />
               <img onClick={()=>updateQuantity(item._id,item.size,0)}className='w-4 mr-4 sm:w-5 cursor-pointer' src={assets.bin_icon} alt=''/>
             </div>
           )
@@ -62,13 +78,18 @@ const Cart = () => {
       <div className='flex justify-end my-20'>
         <div className='w-full sm:w-[450px]'>
           <CartTotal/>
+          {!token && cartData.length > 0 && (
+            <p className='text-sm text-orange-600 mb-2'>
+              Please login to continue checkout
+            </p>
+          )}
           <button 
-            onClick={() => cartData.length > 0 && navigate('/place-order')} 
+            onClick={handleCheckout} 
             disabled={cartData.length === 0}
-            className={`text-sm my-8 px-8 py-3 
-              ${cartData.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-black text-white'}`}
+            className={`text-sm my-8 px-8 py-3 w-full
+              ${cartData.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-black text-white active:bg-gray-700'}`}
           >
-            PROCEED TO CHECKOUT
+            {!token ? 'LOGIN TO CHECKOUT' : 'PROCEED TO CHECKOUT'}
           </button>
           </div>
       </div>

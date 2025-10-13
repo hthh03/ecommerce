@@ -77,11 +77,6 @@ const ShopContextProvider = (props) => {
   // ====== Cart Logic ======
 
   const addToCart = async (itemId, size) => {
-    if (!size) {
-      toast.error("Select Product Size");
-      return;
-    }
-
     let cartData = structuredClone(cartItems);
 
     if (cartData[itemId]) {
@@ -110,16 +105,12 @@ const ShopContextProvider = (props) => {
     let cartData = structuredClone(cartItems);
 
     if (quantity <= 0) {
-      delete cartData[itemId][size];
-      if (Object.keys(cartData[itemId]).length === 0) {
-        delete cartData[itemId];
-      }
+      delete cartData[itemId][size]; 
     } else {
-      cartData[itemId][size] = quantity;
+      cartData[itemId][size] = quantity; 
     }
-
+    
     setCartItems(cartData);
-
     if (token) {
       try {
         await axios.post(
@@ -154,7 +145,7 @@ const ShopContextProvider = (props) => {
 
     for (const productId in cartItems) {
       const product = products.find((p) => p._id === productId);
-      if (!product) continue; // tránh lỗi undefined khi reload
+      if (!product) continue; 
 
       for (const variant in cartItems[productId]) {
         const quantity = cartItems[productId][variant];

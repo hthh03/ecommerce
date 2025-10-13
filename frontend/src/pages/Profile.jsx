@@ -16,10 +16,9 @@ const Profile = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState("profile"); // "profile" or "password"
+  const [activeTab, setActiveTab] = useState("profile"); 
   const fileInputRef = useRef(null);
 
-  // 🔹 Load user profile
   const loadProfile = async () => {
     try {
       if (!token) return;
@@ -40,11 +39,9 @@ const Profile = () => {
     }
   };
 
-  // 🔹 Update profile info
   const handleUpdateProfile = async (event) => {
     event.preventDefault();
-    
-    // Debug: Check data before sending
+
     console.log("Sending data:", { name, phone, address });
     
     try {
@@ -54,14 +51,11 @@ const Profile = () => {
         { headers: { token } }
       );
       
-      // Debug: Check response
       console.log("Response:", response.data);
       
       if (response.data.success) {
         toast.success("Profile updated successfully");
         setUser(response.data.user);
-        
-        // Debug: Check updated user
         console.log("Updated user:", response.data.user);
       } else {
         toast.error(response.data.message);
@@ -72,7 +66,6 @@ const Profile = () => {
     }
   };
 
-  // 🔹 Update avatar (upload file)
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -101,11 +94,9 @@ const Profile = () => {
     }
   };
 
-  // 🔹 Change password
   const handleChangePassword = async (event) => {
     event.preventDefault();
     
-    // Validate password confirmation
     if (newPassword !== confirmPassword) {
       toast.error("New passwords do not match");
       return;
@@ -142,7 +133,7 @@ const Profile = () => {
 
   return (
     <div className="w-[90%] sm:max-w-6xl m-auto mt-14 text-gray-800">
-      {/* Header */}
+
       <div className="flex items-center gap-2 mb-8 justify-center">
         <p className="prata-regular text-3xl">My Profile</p>
         <hr className="border-none h-[1.5px] w-8 bg-gray-800" />
@@ -150,7 +141,7 @@ const Profile = () => {
 
       {user ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Side - Avatar + Info */}
+
           <div className="lg:col-span-1 flex flex-col items-center gap-4 border p-6 rounded-md shadow-sm h-fit">
             <img
               src={user.avatar || "https://via.placeholder.com/150"}
