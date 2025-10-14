@@ -15,6 +15,7 @@ const ShopContextProvider = (props) => {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState([]);
   const [subCategory, setSubCategory] = useState([]);
+  const [subCategoryList, setSubCategoryList] = useState([]);
   const [showFilter, setShowFilter] = useState(true);
   const [token, setToken] = useState("");
   const navigate = useNavigate();
@@ -29,6 +30,22 @@ const ShopContextProvider = (props) => {
   useEffect(() => {
     localStorage.setItem("cartItems", JSON.stringify(cartItems));
   }, [cartItems]);
+
+    const getSubCategoryData = async () => {
+        try {
+            const response = await axios.get(backendUrl + "/api/subcategory/list");
+            if (response.data.success) {
+                setSubCategoryList(response.data.subCategories);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getProductsData();
+        getSubCategoryData(); // Gọi hàm fetch
+    }, []);
 
   // Fetch products từ backend
   const getProductsData = async () => {
@@ -187,6 +204,7 @@ const ShopContextProvider = (props) => {
     setToken,
     token,
     getOrderTotal,
+    subCategoryList,
   };
 
   return (

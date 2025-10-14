@@ -23,8 +23,26 @@ const ProductManager = ({token}) => {
   const [subCategory, setSubCategory] = useState("Ring")
   const [bestseller, setBestseller] = useState(false)
   const [sizes, setSizes] = useState([])
+  const [subCategoryList, setSubCategoryList] = useState([]); // State mới
 
-  const subCategories = ["All", "Ring", "Necklace", "Bracelet"]
+  // const subCategories = ["All", "Ring", "Necklace", "Bracelet"]
+
+   const fetchSubCategories = async () => {
+        try {
+            const response = await axios.get(backendUrl + '/api/subcategory/list');
+            if (response.data.success) {
+                setSubCategoryList(response.data.subCategories);
+            }
+        // eslint-disable-next-line no-unused-vars
+        } catch (error) {
+            toast.error("Failed to load sub-categories");
+        }
+    };
+
+    useEffect(() => {
+        fetchList();
+        fetchSubCategories(); // Gọi hàm fetch
+    }, []);
 
   const fetchList = async () => {
     try {
@@ -164,19 +182,26 @@ const ProductManager = ({token}) => {
           </div>
 
           <div className="mb-6 border-b pb-4">
-            <div className="flex flex-wrap gap-2">
-              {subCategories.map((subCat) => (
-                <button
-                  key={subCat}
-                  onClick={() => filterBySubCategory(subCat)}
+           <div className="flex flex-wrap gap-2">
+              <button
+                  onClick={() => filterBySubCategory("All")}
                   className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-                    selectedSubCategory === subCat
+                      selectedSubCategory === "All" ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+              >
+                  All ({list.length})
+              </button>
+              {subCategoryList.map((subCat) => (
+                <button
+                  key={subCat._id}
+                  onClick={() => filterBySubCategory(subCat.name)}
+                  className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+                    selectedSubCategory === subCat.name
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <span className="sm:hidden">{subCat}</span>
-                  <span className="hidden sm:inline">{subCat} ({getProductCount(subCat)})</span>
+                  {subCat.name} ({getProductCount(subCat.name)})
                 </button>
               ))}
             </div>
@@ -364,16 +389,16 @@ const ProductManager = ({token}) => {
               </div>
 
               <div>
-                <p className='mb-2 font-medium text-sm sm:text-base'>Sub Category</p>
-                <select 
-                  onChange={(e)=>setSubCategory(e.target.value)} 
-                  value={subCategory} 
-                  className='w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-500 text-sm'
-                >
-                  <option value="Ring">Ring</option> 
-                  <option value="Necklace">Necklace</option>
-                  <option value="Bracelet">Bracelet</option>
-                </select>
+                  <p className='mb-2 font-medium'>Sub Category</p>
+                  <select 
+                    onChange={(e)=>setSubCategory(e.target.value)} 
+                    value={subCategory} 
+                    className='w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-500 text-sm'
+                  >
+                    {subCategoryList.map((item) => (
+                        <option key={item._id} value={item.name}>{item.name}</option>
+                    ))}
+                  </select>
               </div>
 
               <div>

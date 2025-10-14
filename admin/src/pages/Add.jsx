@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { assets } from '../assets/assets'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -16,6 +16,7 @@ const Add = ({ token }) => {
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState('Men')
   const [subCategory, setSubCategory] = useState('Ring')
+   const [subCategoryList, setSubCategoryList] = useState([]); 
   const [bestseller, setBestseller] = useState(false)
   const [sizes, setSizes] = useState([])
 
@@ -64,6 +65,26 @@ const Add = ({ token }) => {
       toast.error(error.message)
     }
   }
+  
+   // Hàm fetch sub-categories
+  const fetchSubCategories = async () => {
+    try {
+      const response = await axios.get(backendUrl + '/api/subcategory/list');
+      if (response.data.success) {
+        setSubCategoryList(response.data.subCategories);
+        if (response.data.subCategories.length > 0) {
+           setSubCategory(response.data.subCategories[0].name); // Set giá trị mặc định
+        }
+      }
+    // eslint-disable-next-line no-unused-vars
+    } catch (error) {
+      toast.error("Failed to load sub-categories");
+    }
+  };
+
+  useEffect(() => {
+    fetchSubCategories();
+  }, []);
 
   return (
     <form
@@ -134,18 +155,20 @@ const Add = ({ token }) => {
           </select>
         </div>
 
-        <div>
-          <p className='mb-2 font-medium'>Sub Category</p>
-          <select
-            onChange={(e) => setSubCategory(e.target.value)}
-            value={subCategory}
-            className='w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-500'
-          >
-            <option value='Ring'>Ring</option>
-            <option value='Necklace'>Necklace</option>
-            <option value='Bracelet'>Bracelet</option>
-          </select>
-        </div>
+         <div>
+        <p className='mb-2 font-medium'>Sub Category</p>
+        <select
+          onChange={(e) => setSubCategory(e.target.value)}
+          value={subCategory}
+          className='w-full px-3 py-2 border rounded focus:outline-none focus:border-blue-500'
+          required
+        >
+          {subCategoryList.length === 0 && <option disabled>Loading...</option>}
+          {subCategoryList.map((item) => (
+            <option key={item._id} value={item.name}>{item.name}</option>
+          ))}
+        </select>
+      </div>
 
         <div>
           <p className='mb-2 font-medium'>Price ($)</p>
