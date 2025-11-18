@@ -5,8 +5,8 @@ import {
     removeProduct, 
     singleProduct, 
     updateProduct,
-    listAllProductsAdmin, // <-- Import hàm mới
-    toggleProductStatus   // <-- Import hàm mới
+    listAllProductsAdmin, // <-- Đã import
+    toggleProductStatus   // <-- Đã import
 } from '../controllers/productController.js'
 import upload from '../middleware/multer.js'
 import adminAuth from '../middleware/adminAuth.js'

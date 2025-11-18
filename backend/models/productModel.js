@@ -15,7 +15,8 @@ const productSchema = new mongoose.Schema({
     },
     image: { type: Array, required: true }, 
     bestseller: {type:Boolean},
-    isActive: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: true }, 
+    numReviews: { type: Number, default: 0 },
     date: { type: Number, required: true }
 });
 

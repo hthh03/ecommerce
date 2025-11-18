@@ -16,26 +16,20 @@ const placeOrder = async (req, res) => {
         const userId = req.userId;   
         const { items, amount, address } = req.body;
 
-        // --- LOGIC QUẢN LÝ TỒN KHO ---
-        // 1. Kiểm tra tồn kho trước khi tạo đơn hàng
+        // --- LOGIC QUẢN LÝ TỒN KHO (TRỪ KHO) ---
         for (const item of items) {
-            // Giả định rằng mỗi 'item' trong giỏ hàng có chứa: productId, size, và quantity
             const product = await productModel.findById(item.productId);
             if (!product) {
                 return res.status(404).json({ success: false, message: `Không tìm thấy sản phẩm: ${item.name}` });
             }
-
             const sizeVariant = product.sizes.find(s => s.size === item.size);
             if (!sizeVariant) {
                 return res.status(404).json({ success: false, message: `Không tìm thấy kích cỡ cho sản phẩm: ${item.name}` });
             }
-
             if (sizeVariant.stock < item.quantity) {
                 return res.status(400).json({ success: false, message: `Không đủ hàng cho ${item.name} - Cỡ ${item.size}. Chỉ còn ${sizeVariant.stock} sản phẩm.` });
             }
         }
-        
-        // 2. Nếu tất cả sản phẩm đều đủ hàng, tiến hành trừ kho
         for (const item of items) {
             await productModel.updateOne(
                 { _id: item.productId, 'sizes.size': item.size },
@@ -55,7 +49,6 @@ const placeOrder = async (req, res) => {
         });
         await newOrder.save();
 
-        // Xóa giỏ hàng sau khi đặt hàng thành công
         await userModel.findByIdAndUpdate(userId, { cartData: {} });
 
         res.json({ success: true, message: "Đặt hàng thành công" });
@@ -72,8 +65,7 @@ const placeOrderStripe = async (req, res) => {
         const { items, amount, address } = req.body;
         const { origin } = req.headers;
 
-        // --- LOGIC QUẢN LÝ TỒN KHO ---
-        // 1. Kiểm tra tồn kho (tương tự như COD)
+        // --- LOGIC QUẢN LÝ TỒN KHO (TRỪ KHO) ---
         for (const item of items) {
             const product = await productModel.findById(item.productId);
             if (!product) {
@@ -87,8 +79,6 @@ const placeOrderStripe = async (req, res) => {
                 return res.status(400).json({ success: false, message: `Không đủ hàng cho ${item.name} - Cỡ ${item.size}. Chỉ còn ${sizeVariant.stock} sản phẩm.` });
             }
         }
-        
-        // 2. Trừ kho (tương tự như COD)
         for (const item of items) {
             await productModel.updateOne(
                 { _id: item.productId, 'sizes.size': item.size },
@@ -220,11 +210,7 @@ const cancelOrder = async (req, res) => {
         // Logic hoàn tiền Stripe
         if (order.paymentMethod === 'Stripe' && order.payment) {
             try {
-
-                const sessions = await stripe.checkout.sessions.list({
-                    limit: 100,
-                });
-
+                const sessions = await stripe.checkout.sessions.list({ limit: 100 });
                 const session = sessions.data.find(s => 
                     s.metadata && s.metadata.orderId === orderId
                 );
@@ -239,7 +225,6 @@ const cancelOrder = async (req, res) => {
                             reason: reason || 'Customer requested cancellation'
                         }
                     });
-
                     refundResult = {
                         refundId: refund.id,
                         status: refund.status,

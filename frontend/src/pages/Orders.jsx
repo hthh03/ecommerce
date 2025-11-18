@@ -6,13 +6,25 @@ import { toast } from 'react-toastify';
 
 const Orders = () => {
   const { backendUrl, token, currency, getOrderTotal, delivery_fee } = useContext(ShopContext);
+  
+  // --- State cho Đơn hàng ---
   const [orders, setOrders] = useState([]);
   const [expandedOrderId, setExpandedOrderId] = useState(null); 
+  const [loading, setLoading] = useState(false);
+
+  // --- State cho Hủy Đơn ---
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
-  const [loading, setLoading] = useState(false);
 
+  // --- State cho Bình luận (Review/Comment) ---
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewProduct, setReviewProduct] = useState(null); 
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false); // Xác định là Viết mới hay Sửa
+
+  // Tải danh sách đơn hàng
   const loadOrderData = async () => {
     try {
       if (!token) return;
@@ -31,19 +43,19 @@ const Orders = () => {
   };
 
   const toggleExpand = (orderId) => {
-        setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+      setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
+  // --- HÀM XỬ LÝ HỦY ĐƠN ---
   const handleCancelOrder = async () => {
     if (!selectedOrder || !cancelReason.trim()) {
       toast.error("Please provide a cancellation reason");
       return;
     }
-
     setLoading(true);
     try {
       const response = await axios.post(
-        backendUrl + "/api/order/cancel",
+        backendUrl + "/api/order/cancel", 
         { 
           orderId: selectedOrder._id, 
           reason: cancelReason 
@@ -54,14 +66,10 @@ const Orders = () => {
       if (response.data.success) {
         toast.success("Order cancelled successfully");
         if (response.data.refund) {
-          toast.info(`Refund initiated: ${currency}${response.data.refund.amount}`, {
-            autoClose: 5000
-          });
+          toast.info(`Refund initiated: ${currency}${response.data.refund.amount}`);
         }
-        setShowCancelModal(false);
-        setCancelReason("");
-        setSelectedOrder(null);
-        loadOrderData(); 
+        closeCancelModal();
+        loadOrderData();
       } else {
         toast.error(response.data.message);
       }
@@ -72,76 +80,100 @@ const Orders = () => {
     }
   };
 
-  const checkRefundStatus = async (orderId) => {
+  // --- HÀM MỞ MODAL BÌNH LUẬN (KIỂM TRA REVIEW CŨ) ---
+  const openReviewModal = async (product, orderId) => {
+    setReviewProduct({ ...product, orderId });
+    setReviewLoading(true); // Hiển thị loading khi đang check
+
     try {
+        // Gọi API kiểm tra xem user đã review sản phẩm này trong đơn này chưa
+        // (Bạn cần đảm bảo backend đã có route /api/review/user-review như hướng dẫn trước)
+        const response = await axios.post(
+            backendUrl + "/api/review/user-review",
+            { productId: product.productId, orderId: orderId },
+            { headers: { token } }
+        );
+
+        if (response.data.success) {
+            // Đã có review -> Chế độ EDIT
+            setIsEditMode(true);
+            setReviewComment(response.data.review.comment); // Điền sẵn comment cũ
+        } else {
+            // Chưa có review -> Chế độ ADD
+            setIsEditMode(false);
+            setReviewComment("");
+        }
+        setShowReviewModal(true);
+
+    } catch (error) {
+        console.error(error);
+        // Nếu lỗi (ví dụ 404 not found), mặc định là Add mới
+        setIsEditMode(false);
+        setReviewComment("");
+        setShowReviewModal(true);
+    } finally {
+        setReviewLoading(false);
+    }
+  };
+
+  // --- HÀM GỬI BÌNH LUẬN (ADD HOẶC EDIT) ---
+  const handleReviewSubmit = async () => {
+    if (!reviewComment.trim()) {
+      toast.error("Please provide a comment");
+      return;
+    }
+    setReviewLoading(true);
+    
+    try {
+      // Xác định API endpoint dựa trên chế độ
+      const endpoint = isEditMode ? "/api/review/edit" : "/api/review/add";
+      
       const response = await axios.post(
-        backendUrl + "/api/order/refund-status",
-        { orderId },
+        backendUrl + endpoint,
+        {
+          productId: reviewProduct.productId, 
+          orderId: reviewProduct.orderId,
+          comment: reviewComment
+        },
         { headers: { token } }
       );
 
-      if (response.data.success && response.data.refund) {
-        const refund = response.data.refund;
-        const statusColor = {
-          'pending': 'text-yellow-600',
-          'succeeded': 'text-green-600',
-          'failed': 'text-red-600',
-          'canceled': 'text-gray-600'
-        };
-        
-        toast.info(
-          <div>
-            <p className="font-medium">Refund Status</p>
-            <p className={statusColor[refund.status] || 'text-blue-600'}>
-              {refund.status.toUpperCase()}: {currency}{refund.amount}
-            </p>
-            <p className="text-xs text-gray-500">
-              {new Date(refund.created).toLocaleDateString()}
-            </p>
-          </div>,
-          { autoClose: 8000 }
-        );
+      if (response.data.success) {
+        toast.success(isEditMode ? "Comment updated!" : "Comment submitted!");
+        closeReviewModal();
       } else {
-        toast.info("No refund found for this order");
+        toast.error(response.data.message);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setReviewLoading(false);
     }
   };
 
-  const openCancelModal = (order) => {
-    setSelectedOrder(order);
-    setShowCancelModal(true);
+  // Các hàm helper nhỏ
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setReviewProduct(null);
+    setReviewComment("");
+  };
+  
+  const openCancelModal = (order) => { setSelectedOrder(order); setShowCancelModal(true); };
+  const closeCancelModal = () => { setShowCancelModal(false); setCancelReason(""); setSelectedOrder(null); };
+  
+  const checkRefundStatus = async (orderId) => {
+     try {
+       const res = await axios.post(backendUrl + "/api/order/refund-status", { orderId }, { headers: { token } });
+       if (res.data.success && res.data.refund) {
+         toast.info(`Refund Status: ${res.data.refund.status.toUpperCase()} - ${currency}${res.data.refund.amount}`);
+       } else { toast.info("No refund found"); }
+     } catch (e) { toast.error(e.message); }
   };
 
-  const closeCancelModal = () => {
-    setShowCancelModal(false);
-    setCancelReason("");
-    setSelectedOrder(null);
-  };
-
-  const canCancelOrder = (order) => {
-    const cancelableStatuses = ['Order Placed', 'Packing'];
-    return !order.cancelled && cancelableStatuses.includes(order.status);
-  };
-
-  const getStatusColor = (status, cancelled) => {
+  const getStatusColor = (status, cancelled) => { 
     if (cancelled) return 'bg-red-100 text-red-700';
-    
-    switch (status) {
-      case 'Delivered':
-        return 'bg-green-100 text-green-700';
-      case 'Order Placed':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'Packing':
-        return 'bg-blue-100 text-blue-700';
-      case 'Shipped':
-        return 'bg-purple-100 text-purple-700';
-      case 'Out for delivery':
-        return 'bg-orange-100 text-orange-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
+    if (status === 'Delivered') return 'bg-green-100 text-green-700';
+    return 'bg-gray-100 text-gray-700';
   };
 
   useEffect(() => {
@@ -157,145 +189,80 @@ const Orders = () => {
       <div className="mt-6">
         {orders.map((order) => (
           <div key={order._id} className={`border rounded-xl shadow-sm p-6 mb-6 bg-white hover:shadow-md transition`}>
-            {/* Header */}
+            
+            {/* --- HEADER ĐƠN HÀNG --- */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 mb-4">
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">
                   Order <span className="text-blue-600">#{order._id.slice(-6)}</span>
                 </h3>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <p className="text-sm text-gray-500">
-                    Date: <span className="font-medium">{new Date(order.date).toDateString()}</span>
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Payment: <span className="font-medium">{order.paymentMethod}</span>
-                  </p>
-                  <p className={`text-sm font-medium ${order.payment ? 'text-green-600' : 'text-red-600'}`}>
-                    {order.payment ? '✓ Paid' : '✗ Pending'}
-                  </p>
+                   <p className="text-sm text-gray-500">Date: {new Date(order.date).toDateString()}</p>
+                   <p className="text-sm text-gray-500">Payment: {order.paymentMethod}</p>
                 </div>
-
-                {/* Cancelled Info */}
+                {/* Hiển thị lý do hủy */}
                 {order.cancelled && (
                   <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
                     <p className="text-red-800 text-sm font-medium">❌ CANCELLED</p>
-                    <p className="text-red-600 text-xs">Reason: {order.cancelReason}</p>
-                    {order.cancelledAt && (
-                      <p className="text-red-500 text-xs">
-                        Cancelled on: {new Date(order.cancelledAt).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Refund Info */}
-                {order.refund && (
-                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                    <p className="text-blue-800 text-sm font-medium">
-                      💰 Refund: {currency}{order.refund.amount}
-                    </p>
-                    <p className="text-blue-600 text-xs">
-                      Status: <span className="font-medium">{order.refund.status?.toUpperCase()}</span>
-                    </p>
+                    <p className="text-red-600 text-xs">Reason: {order.cancelReason || 'N/A'}</p>
                   </div>
                 )}
               </div>
 
-              {/* Status + Total + Actions */}
               <div className="flex flex-col md:items-end gap-3 mt-4 md:mt-0">
-                {/* Status Badge */}
-                <span
-                  className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(order.status, order.cancelled)}`}
-                >
+                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(order.status, order.cancelled)}`}>
                   {order.cancelled ? 'Cancelled' : order.status}
                 </span>
-
-                {/* Total */}
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Total: </span>
-                  <span>
-                    {currency} {(getOrderTotal(order.items) + delivery_fee).toFixed(2)}
-                  </span>
+                  <span>Total: {currency} {(getOrderTotal(order.items) + delivery_fee).toFixed(2)}</span>
                 </div>
-
-                {/* Action Buttons */}
+                
                 <div className="flex gap-2">
-                  <button onClick={() => toggleExpand(order._id)} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition">
-                    {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
-                  </button>
-
-                  {/* Cancel Button - Only show for cancelable orders */}
-                  {canCancelOrder(order) && (
-                    <button
-                      onClick={() => openCancelModal(order)}
-                      className="px-4 py-2 text-sm bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition"
-                    >
-                      Cancel Order
-                    </button>
-                  )}
-
-                  {/* Check Refund Button - Only show for refunded orders */}
-                  {order.refund && order.paymentMethod === 'Stripe' && (
-                    <button
-                      onClick={() => checkRefundStatus(order._id)}
-                      className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-                    >
-                      Check Refund
-                    </button>
-                  )}
+                   <button onClick={() => toggleExpand(order._id)} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-100">
+                      {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
+                   </button>
+                   {/* Nút Hủy chỉ hiện khi chưa giao hàng */}
+                   {!order.cancelled && ['Order Placed', 'Packing'].includes(order.status) && (
+                      <button onClick={() => openCancelModal(order)} className="px-4 py-2 text-sm bg-yellow-500 text-white rounded-md">Cancel</button>
+                   )}
+                   {order.refund && order.paymentMethod === 'Stripe' && (
+                      <button onClick={() => checkRefundStatus(order._id)} className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md">Refund Status</button>
+                   )}
                 </div>
               </div>
             </div>
 
-            {/* Order Details - Expanded View */}
+            {/* --- CHI TIẾT SẢN PHẨM (MỞ RỘNG) --- */}
             {expandedOrderId === order._id && (
               <div className="space-y-4">
                 <h4 className="font-semibold text-gray-800 border-b pb-2">Order Items</h4>
                 {order.items.map((item, i) => (
                   <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                    <img
-                        src={item.image} 
-                        alt={item.name}
-                      className="w-16 h-16 object-cover rounded-md"
-                    />
+                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-md" />
                     <div className="flex-1">
                       <p className="font-medium text-gray-800">{item.name}</p>
-                      <p className="text-sm text-gray-500">Size: {item.size}</p>
-                      <p className="text-sm text-gray-600">
-                        {currency}{item.price} × {item.quantity} = {currency}{item.price * item.quantity}
-                      </p>
+                      <p className="text-sm text-gray-500">Size: {item.size} | Qty: {item.quantity}</p>
+                      <p className="text-sm text-gray-600">{currency}{item.price}</p>
                     </div>
+
+                    {/* NÚT COMMENT / EDIT - Chỉ hiện khi đã giao hàng */}
+                    {order.status === 'Delivered' && (
+                      <button
+                        onClick={() => openReviewModal(item, order._id)}
+                        className="px-4 py-2 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition self-center shadow-sm whitespace-nowrap"
+                      >
+                        Write / Edit Comment
+                      </button>
+                    )}
                   </div>
                 ))}
                 
-                {/* Order Summary */}
-                <div className="border-t pt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Subtotal:</span>
-                    <span>{currency} {(getOrderTotal(order.items)).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Delivery Fee:</span>
-                    <span>{currency} {delivery_fee}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Total:</span>
-                    <span>
-                      {currency} {(getOrderTotal(order.items) + delivery_fee).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Shipping Address */}
+                {/* Địa chỉ giao hàng */}
                 <div className="border-t pt-4">
-                  <h4 className="font-semibold text-gray-800 mb-2">Shipping Address</h4>
-                  <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                    <p>{order.address.firstName} {order.address.lastName}</p>
-                    <p>{order.address.street}</p>
-                    <p>{order.address.city}, {order.address.state} {order.address.zipcode}</p>
-                    <p>{order.address.country}</p>
-                    <p>Phone: {order.address.phone}</p>
-                  </div>
+                   <p className="text-sm text-gray-600 font-medium">Delivery Address:</p>
+                   <p className="text-sm text-gray-500">
+                     {order.address.firstName} {order.address.lastName}, {order.address.street}, {order.address.city}
+                   </p>
                 </div>
               </div>
             )}
@@ -303,90 +270,81 @@ const Orders = () => {
         ))}
       </div>
 
-      {/* No Orders Message */}
-      {orders.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No orders found</p>
-          <p className="text-gray-400 text-sm mt-2">Your order history will appear here</p>
-        </div>
+      {/* --- MODAL HỦY ĐƠN --- */}
+      {showCancelModal && (
+         <div className="modal-overlay">
+            <div className="modal-container">
+                <div className="modal-header"><h3 className="modal-title">Cancel Order</h3></div>
+                <div className="modal-body">
+                    <div className="order-info">
+                        <p className="text-sm text-gray-600">Are you sure you want to cancel Order #{selectedOrder?._id.slice(-6)}?</p>
+                    </div>
+                    <label className="form-label required mt-3">Reason:</label>
+                    <textarea 
+                        className="form-textarea" 
+                        value={cancelReason} 
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        placeholder="Why are you cancelling?"
+                    />
+                </div>
+                <div className="modal-actions">
+                    <button className="btn btn-secondary" onClick={closeCancelModal}>Back</button>
+                    <button className="btn btn-danger" onClick={handleCancelOrder} disabled={loading}>Confirm Cancel</button>
+                </div>
+            </div>
+         </div>
       )}
 
-      {/* 🔹 Cancel Order Modal */}
-      {showCancelModal && (
+      {/* --- MODAL BÌNH LUẬN (COMMENT ONLY) --- */}
+      {showReviewModal && (
         <div className="modal-overlay">
           <div className="modal-container">
-            {/* Header */}
             <div className="modal-header">
-              <h3 className="modal-title">Cancel Order</h3>
+              <h3 className="modal-title">
+                  {isEditMode ? 'Edit Your Comment' : 'Write a Comment'}
+              </h3>
             </div>
             
             <div className="modal-body">
-              {/* Order Info */}
-              <div className="order-info">
-                <p className="text-sm font-medium text-gray-700 mb-1">
-                  Order ID: <span className="text-blue-600">#{selectedOrder?._id.slice(-6)}</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Total Amount: <span className="font-medium">{currency}{selectedOrder?.amount}</span>
-                </p>
-              </div>
-              
-              {/* Refund Notice for Stripe Orders */}
-              {selectedOrder?.paymentMethod === 'Stripe' && selectedOrder?.payment && (
-                <div className="refund-notice">
-                  <p className="refund-notice-title">
-                    💰 Refund Information
-                  </p>
-                  <p className="refund-notice-text">
-                    Since you paid via Stripe, a full refund of {currency}{selectedOrder.amount} will be processed automatically.
-                  </p>
-                  <p className="text-amber-600 text-xs mt-1">
-                    Refunds typically take 5-10 business days to appear in your account.
-                  </p>
+              {/* Thông tin sản phẩm */}
+              <div className="flex items-center gap-4 mb-4 bg-gray-50 p-3 rounded-lg">
+                <img src={reviewProduct.image} alt={reviewProduct.name} className="w-12 h-12 rounded object-cover" />
+                <div>
+                  <p className="font-medium text-sm">{reviewProduct.name}</p>
+                  <p className="text-xs text-gray-500">Size: {reviewProduct.size}</p>
                 </div>
-              )}
+              </div>
 
-              {/* Reason Input */}
-              <div>
-                <label className="form-label required">
-                  Why are you cancelling this order?
-                </label>
+              {/* Ô nhập bình luận */}
+              <div className="mt-2">
+                <label className="form-label required">Your Experience:</label>
                 <textarea
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder="Please provide a reason for cancellation..."
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="Share your thoughts about this product..."
                   className="form-textarea"
-                  rows="4"
+                  rows="5"
                   maxLength="500"
+                  disabled={reviewLoading} 
                 />
-                <p className="character-count">
-                  {cancelReason.length}/500 characters
-                </p>
+                <p className="text-right text-xs text-gray-400 mt-1">{reviewComment.length}/500</p>
               </div>
             </div>
 
-            {/* Actions */}
             <div className="modal-actions">
               <button
-                onClick={closeCancelModal}
+                onClick={closeReviewModal}
                 className="btn btn-secondary"
-                disabled={loading}
+                disabled={reviewLoading}
               >
-                Keep Order
+                Cancel
               </button>
               <button
-                onClick={handleCancelOrder}
+                onClick={handleReviewSubmit}
                 className="btn btn-danger"
-                disabled={loading || !cancelReason.trim()}
+                disabled={reviewLoading || !reviewComment.trim()}
               >
-                {loading ? (
-                  <>
-                    <div className="spinner"></div>
-                    Processing...
-                  </>
-                ) : (
-                  'Cancel Order'
-                )}
+                {reviewLoading ? 'Processing...' : (isEditMode ? 'Update Comment' : 'Submit Comment')}
               </button>
             </div>
           </div>

@@ -13,7 +13,7 @@ const orderSchema = new mongoose.Schema({
     // 🔹 NEW: Cancel related fields
     cancelled: {type: Boolean, default: false},
     cancelledAt: {type: Date},
-    cancelReason: {type: String},
+    cancelReason: {type: String}, // <-- Trường để lưu lý do
     
     // 🔹 NEW: Refund related fields
     refund: {

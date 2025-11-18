@@ -64,7 +64,7 @@ const listAllProductsAdmin = async (req,res) => {
     try {
         const products = await productModel.find({});
         res.json({success:true,products})
-    } catch (error) { // <-- LỖI ĐÃ ĐƯỢC SỬA Ở ĐÂY
+    } catch (error) { // <-- Lỗi cú pháp đã được sửa ở đây
         console.log(error)
         res.json({success: false, message: error.message})
     }
