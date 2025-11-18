@@ -16,9 +16,29 @@ const Add = ({ token }) => {
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState('Men')
   const [subCategory, setSubCategory] = useState('Ring')
-   const [subCategoryList, setSubCategoryList] = useState([]); 
+  const [subCategoryList, setSubCategoryList] = useState([]); 
   const [bestseller, setBestseller] = useState(false)
-  const [sizes, setSizes] = useState([])
+  const [sizes, setSizes] = useState([{ size: '', stock: '' }]);
+
+    // Hàm xử lý thay đổi trong các ô input của size/stock
+    const handleSizeChange = (index, event) => {
+        const values = [...sizes];
+        values[index][event.target.name] = event.target.value;
+        setSizes(values);
+    };
+
+    // Hàm thêm một cặp trường size/stock mới
+    const addSizeField = () => {
+        // Sử dụng chuỗi rỗng '' thay vì ' ' để dữ liệu sạch hơn
+        setSizes([...sizes, { size: '', stock: '' }]); 
+    };
+
+    // Hàm xóa một cặp trường size/stock
+    const removeSizeField = (index) => {
+        const values = [...sizes];
+        values.splice(index, 1);
+        setSizes(values);
+    };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault()
@@ -31,7 +51,7 @@ const Add = ({ token }) => {
       formData.append('category', category)
       formData.append('subCategory', subCategory)
       formData.append('bestseller', bestseller.toString())
-      formData.append('sizes', JSON.stringify(sizes))
+      formData.append('sizes', JSON.stringify(sizes));
 
       image1 && formData.append('image1', image1)
       image2 && formData.append('image2', image2)
@@ -185,21 +205,42 @@ const Add = ({ token }) => {
         </div>
       </div>
 
-     <div>
-        <p className='mb-2 font-medium'>Available Sizes</p>
-        <input
-          type="text"
-          value={sizes.join(",")}
-          onChange={(e) =>
-            setSizes(e.target.value.split(",").map(s => s.trim()))
-          }
-          className='w-full max-w-[500px] px-3 py-2 border rounded focus:outline-none focus:border-blue-500'
-          placeholder="Enter sizes separated by comma (e.g. 16,17,18,19 or 40cm,45cm)"
-        />
-        <p className="text-xs text-gray-500 mt-1">
-          Example: Ring → 16,17,18,19 | Necklace → 40cm,45cm
-        </p>
-      </div>
+     <div className="w-full">
+                <p className='mb-2 font-medium'>Available Sizes & Stock</p>
+                {sizes.map((sizeField, index) => (
+                    <div key={index} className="flex items-center gap-3 mb-2">
+                        <input
+                            type="text"
+                            name="size"
+                            placeholder="Size (e.g., 16 or 40cm)"
+                            value={sizeField.size}
+                            // SỬA LỖI Ở ĐÂY: Gắn hàm vào sự kiện onChange
+                            onChange={event => handleSizeChange(index, event)}
+                            className="w-full max-w-[240px] px-3 py-2 border rounded"
+                            required
+                        />
+                        <input
+                            type="number"
+                            name="stock"
+                            placeholder="Stock quantity"
+                            value={sizeField.stock}
+                            // SỬA LỖI Ở ĐÂY: Gắn hàm vào sự kiện onChange
+                            onChange={event => handleSizeChange(index, event)}
+                            className="w-full max-w-[240px] px-3 py-2 border rounded"
+                            required
+                            min="0"
+                        />
+                        {/* SỬA LỖI Ở ĐÂY: Gắn hàm vào sự kiện onClick */}
+                        <button type="button" onClick={() => removeSizeField(index)} className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                            -
+                        </button>
+                    </div>
+                ))}
+                {/* SỬA LỖI Ở ĐÂY: Gắn hàm vào sự kiện onClick */}
+                <button type="button" onClick={addSizeField} className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                    + Add Size
+                </button>
+            </div>
 
       <div className='flex items-center gap-2'>
         <input

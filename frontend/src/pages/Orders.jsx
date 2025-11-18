@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 const Orders = () => {
   const { backendUrl, token, currency, getOrderTotal, delivery_fee } = useContext(ShopContext);
   const [orders, setOrders] = useState([]);
-  const [expandedOrder, setExpandedOrder] = useState(null);
+  const [expandedOrderId, setExpandedOrderId] = useState(null); 
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
@@ -30,8 +30,8 @@ const Orders = () => {
     }
   };
 
-  const toggleExpand = (index) => {
-    setExpandedOrder(expandedOrder === index ? null : index);
+  const toggleExpand = (orderId) => {
+        setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
   const handleCancelOrder = async () => {
@@ -155,13 +155,8 @@ const Orders = () => {
       </div>
 
       <div className="mt-6">
-        {orders.map((order, index) => (
-          <div
-            key={index}
-            className={`border rounded-xl shadow-sm p-6 mb-6 bg-white hover:shadow-md transition ${
-              order.cancelled ? 'border-l-4 border-red-500' : ''
-            }`}
-          >
+        {orders.map((order) => (
+          <div key={order._id} className={`border rounded-xl shadow-sm p-6 mb-6 bg-white hover:shadow-md transition`}>
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 mb-4">
               <div>
@@ -217,7 +212,7 @@ const Orders = () => {
 
                 {/* Total */}
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Total:</span>
+                  <span>Total: </span>
                   <span>
                     {currency} {(getOrderTotal(order.items) + delivery_fee).toFixed(2)}
                   </span>
@@ -225,11 +220,8 @@ const Orders = () => {
 
                 {/* Action Buttons */}
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => toggleExpand(index)}
-                    className="px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition"
-                  >
-                    {expandedOrder === index ? 'Hide Details' : 'View Details'}
+                  <button onClick={() => toggleExpand(order._id)} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition">
+                    {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
                   </button>
 
                   {/* Cancel Button - Only show for cancelable orders */}
@@ -256,14 +248,14 @@ const Orders = () => {
             </div>
 
             {/* Order Details - Expanded View */}
-            {expandedOrder === index && (
+            {expandedOrderId === order._id && (
               <div className="space-y-4">
                 <h4 className="font-semibold text-gray-800 border-b pb-2">Order Items</h4>
                 {order.items.map((item, i) => (
                   <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
                     <img
-                      src={item.image[0]}
-                      alt={item.name}
+                        src={item.image} 
+                        alt={item.name}
                       className="w-16 h-16 object-cover rounded-md"
                     />
                     <div className="flex-1">

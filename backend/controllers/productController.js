@@ -5,7 +5,7 @@ import productModel from '../models/productModel.js'
 // function for add product
 const addProduct = async (req, res) => {
     try {
-        const {name, description, price, category, subCategory, sizes, bestseller} = req.body
+        const {name, description, price, category, subCategory, sizes, bestseller} = req.body;
 
         const image1 = req.files.image1 && req.files.image1[0]
         const image2 = req.files.image2 && req.files.image2[0]
@@ -21,6 +21,8 @@ const addProduct = async (req, res) => {
             })
         )
 
+        const parsedSizes = JSON.parse(sizes);
+
         const productData = {
             name,
             description,
@@ -28,7 +30,7 @@ const addProduct = async (req, res) => {
             price: Number(price),
             subCategory,
             bestseller: bestseller === "true" ? true : false,
-            sizes: JSON.parse(sizes),
+            sizes: parsedSizes,
             image: imagesUrl,
             date: Date.now()
         }
@@ -90,6 +92,8 @@ const updateProduct = async (req, res) => {
             return res.json({ success: false, message: "Product not found" });
         }
 
+        const parsedSizes = JSON.parse(sizes);
+
         // Prepare update data
         const updateData = {
             name,
@@ -98,7 +102,7 @@ const updateProduct = async (req, res) => {
             category,
             subCategory,
             bestseller: bestseller === "true" ? true : false,
-            sizes: JSON.parse(sizes),
+            sizes: parsedSizes,
             date: Date.now()
         };
 

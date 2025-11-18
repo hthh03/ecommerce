@@ -9,8 +9,19 @@ const Product = () => {
   const {products, currency, addToCart } = useContext(ShopContext);
   const [productData, setProductData] = useState(false); 
   const [image, setImage] = useState('');
-  const [size, setSize ] = useState('');
+  const [size, setSize] = useState('');
+  const [selectedSizeStock, setSelectedSizeStock] = useState(null);
 
+  const handleSizeToggle = (selectedSizeObj) => {
+        if (size === selectedSizeObj.size) {
+            setSize('');
+            setSelectedSizeStock(null);
+        } else {
+            setSize(selectedSizeObj.size);
+            setSelectedSizeStock(selectedSizeObj.stock);
+        }
+    };
+  
   const fetchProductData = async () => {
     if (!products || !Array.isArray(products)) {
       console.log('Products not loaded yet or invalid');
@@ -29,14 +40,6 @@ const Product = () => {
   useEffect(() =>{
     fetchProductData()
   },[productId, products]) 
-
-  const handleSizeToggle = (selectedSize) => {
-    if (size === selectedSize) {
-      setSize(''); 
-    } else {
-      setSize(selectedSize); 
-    }
-  }
 
   return productData ? (
     <div className='border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100'>
@@ -78,26 +81,30 @@ const Product = () => {
               <p>Select Size</p>
             </div>
             <div className='flex gap-2'>
-              {productData.sizes && productData.sizes.map((item,index)=>(
+              {productData.sizes && productData.sizes.map((item, index) => (
                 <button 
-                  onClick={()=>handleSizeToggle(item)} 
-                  className={`border py-2 px-4 bg-gray-100 transition-all ${
-                    item === size 
-                      ? 'border-orange-500 bg-orange-50' 
-                      : 'hover:border-gray-400'
-                  }`} 
-                  key={index}
+                    onClick={() => handleSizeToggle(item)} 
+                    className={`border py-2 px-4 transition-all ${
+                        item.size === size ? 'border-orange-500 bg-orange-50' : 'hover:border-gray-400'
+                    } ${item.stock === 0 ? 'bg-gray-200 text-gray-400 line-through cursor-not-allowed' : ''}`}
+                    key={index}
+                    disabled={item.stock === 0}
                 >
-                  {item}
+                    {item.size}
                 </button>
-              ))}
+            ))}
             </div>
+            {size && (
+            <p className='mt-2 text-sm'>
+                {selectedSizeStock > 0 ? `In Stock: ${selectedSizeStock} available` : 'Out of Stock'}
+            </p>
+            )}
           </div>
-          <button 
-            onClick={()=>addToCart(productData._id,size)}
-            className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed'
-            disabled={!size}
-          >
+            <button 
+            onClick={() => addToCart(productData._id, size)}
+            className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed mt-4'
+            disabled={!size || selectedSizeStock === 0}
+            >
            ADD TO CART
           </button>
           <hr className='mt-8 sm:w-4/5'/>

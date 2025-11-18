@@ -43,7 +43,6 @@ const PlaceOrder = () => {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
-    
     // Validation
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       toast.error('Please enter your full name');
@@ -63,19 +62,24 @@ const PlaceOrder = () => {
     try {
       let orderItems = [];
 
-      for (const items in cartItems) {
-        for (const item in cartItems[items]) {
-          if (cartItems[items][item] > 0) {
-            const itemInfo = JSON.parse(JSON.stringify(products.find((product) => product._id === items)));
-            if (itemInfo) {
-              itemInfo.size = item;
-              itemInfo.quantity = cartItems[items][item];
-              itemInfo.price = formatPrice(itemInfo.price);
-              orderItems.push(itemInfo);
+      for (const itemId in cartItems) {
+            const productInfo = products.find((product) => product._id === itemId);
+            if (productInfo) {
+                for (const size in cartItems[itemId]) {
+                    if (cartItems[itemId][size] > 0) {
+                        // Tạo một đối tượng mới, gọn gàng với các trường cần thiết
+                        orderItems.push({
+                            productId: productInfo._id, // QUAN TRỌNG: Thêm productId
+                            name: productInfo.name,
+                            price: formatPrice(productInfo.price),
+                            image: productInfo.image[0],
+                            size: size,
+                            quantity: cartItems[itemId][size]
+                        });
+                    }
+                }
             }
-          }
         }
-      }
       if (orderItems.length === 0) {
         toast.error('Your cart is empty');
         return;

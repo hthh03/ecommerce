@@ -22,68 +22,71 @@ const ProductManager = ({token}) => {
   const [category, setCategory] = useState("Men")
   const [subCategory, setSubCategory] = useState("Ring")
   const [bestseller, setBestseller] = useState(false)
-  const [sizes, setSizes] = useState([])
-  const [subCategoryList, setSubCategoryList] = useState([]); // State mới
-
-  // const subCategories = ["All", "Ring", "Necklace", "Bracelet"]
+  const [sizes, setSizes] = useState([{ size: '', stock: '' }]);
+  const [subCategoryList, setSubCategoryList] = useState([]);
 
    const fetchSubCategories = async () => {
         try {
-            const response = await axios.get(backendUrl + '/api/subcategory/list');
+            const response = await axios.get(`${backendUrl}/api/subcategory/list`);
             if (response.data.success) {
                 setSubCategoryList(response.data.subCategories);
             }
-        // eslint-disable-next-line no-unused-vars
         } catch (error) {
-            toast.error("Failed to load sub-categories");
+          console.log(error)
+          toast.error("Failed to load sub-categories");
         }
     };
 
     useEffect(() => {
         fetchList();
-        fetchSubCategories(); // Gọi hàm fetch
+        fetchSubCategories();
     }, []);
 
   const fetchList = async () => {
-    try {
-      const response = await axios.get(backendUrl + '/api/product/list')
-      if (response.data.success) {
-         setList(response.data.products) 
-         setFilteredList(response.data.products)
-      } else {
-        toast.error(response.data.message)
-      }
-    } catch (error) {
-      console.log(error)
-      toast.error(error.message)
-    }
-  }
-
-  const removeProduct = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        const response = await axios.post(backendUrl + '/api/product/remove', {id}, {headers:{token}})
-        if (response.data.success) {
-          toast.success(response.data.message)
-          await fetchList()
-        } else {
-          toast.error(response.data.message)
+        try {
+            const response = await axios.get(`${backendUrl}/api/product/list`);
+            if (response.data.success) {
+                setList(response.data.products);
+                setFilteredList(response.data.products);
+            } else {
+                toast.error(response.data.message);
+            }
+        } catch (error) {
+          console.log(error)
+          toast.error("Failed to fetch products.");
         }
-      } catch (error) {
-        console.log(error)
-        toast.error(error.message)
-      }
-    }
-  }
+    };
 
   const filterBySubCategory = (subCat) => {
-    setSelectedSubCategory(subCat)
-    if (subCat === "All") {
-      setFilteredList(list)
-    } else {
-      setFilteredList(list.filter(item => item.subCategory === subCat))
-    }
-  }
+        setSelectedSubCategory(subCat);
+        if (subCat === "All") {
+            setFilteredList(list);
+        } else {
+            setFilteredList(list.filter(item => item.subCategory === subCat));
+        }
+    };
+
+    useEffect(() => {
+        // Re-apply filter if the main list changes (e.g., after an update)
+        filterBySubCategory(selectedSubCategory);
+    }, [list]);
+
+   const removeProduct = async (id) => {
+        if (window.confirm('Are you sure you want to delete this product?')) {
+            try {
+                const response = await axios.post(`${backendUrl}/api/product/remove`, { id }, { headers: { token } });
+                if (response.data.success) {
+                    toast.success(response.data.message);
+                    await fetchList();
+                } else {
+                    toast.error(response.data.message);
+                }
+            } catch (error) {
+                 console.log(error)
+                toast.error("Failed to remove product.");
+            }
+        }
+    };
 
   const selectProductForEdit = (product) => {
     setSelectedProduct(product)
@@ -101,7 +104,25 @@ const ProductManager = ({token}) => {
     setImage2(false)
     setImage3(false)
     setImage4(false)
+    setEditMode(true)
   }
+
+   // Handlers for dynamic size/stock fields in the edit form
+    const handleSizeChange = (index, event) => {
+        const values = [...sizes];
+        values[index][event.target.name] = event.target.value;
+        setSizes(values);
+    };
+
+    const addSizeField = () => {
+        setSizes([...sizes, { size: '', stock: '' }]);
+    };
+
+    const removeSizeField = (index) => {
+        const values = [...sizes];
+        values.splice(index, 1);
+        setSizes(values);
+    };
 
   const onUpdateHandler = async (e) => {
     e.preventDefault()
@@ -430,32 +451,22 @@ const ProductManager = ({token}) => {
             </div>
 
             {/* Sizes */}
-            <div className="w-full">
-              <p className='mb-2 font-medium text-sm sm:text-base'>Available Sizes</p>
-              <input
-                type="text"
-                value={sizes.join(",")}
-                 onChange={(e) =>
-                    setSizes(e.target.value.split(",").map(s => s.trim()))
-                  }
-                className='w-full max-w-full sm:max-w-[500px] px-3 py-2 border rounded focus:outline-none focus:border-blue-500 text-sm'
-                placeholder="Enter sizes separated by comma (e.g. 16,17,18,19 or 40cm,45cm)"
-              />
-              <p className="text-xs text-gray-500 mt-1">Example: Ring → 16,17,18,19 | Necklace → 40cm,45cm</p>
-            </div>
+          <div className="w-full">
+              <p className='mb-2 font-medium'>Available Sizes & Stock</p>
+                      {sizes.map((sizeField, index) => (
+                   <div key={index} className="flex items-center gap-3 mb-2">
+                      <input type="text" name="size" placeholder="Size" value={sizeField.size} onChange={e => handleSizeChange(index, e)} className="w-full max-w-[240px] px-3 py-2 border rounded" required />
+                      <input type="number" name="stock" placeholder="Stock" value={sizeField.stock} onChange={e => handleSizeChange(index, e)} className="w-full max-w-[240px] px-3 py-2 border rounded" required min="0" />
+                      <button type="button" onClick={() => removeSizeField(index)} className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">-</button>
+                  </div>
+                ))}
+             <button type="button" onClick={addSizeField} className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">+ Add Size</button>
+          </div>
 
             {/* Bestseller Checkbox */}
             <div className='flex items-center gap-2'>
-              <input 
-                onChange={() => setBestseller(prev => !prev)} 
-                checked={bestseller} 
-                type='checkbox' 
-                id='bestseller'
-                className="w-4 h-4"
-              />
-              <label className='cursor-pointer font-medium text-sm sm:text-base' htmlFor='bestseller'>
-                Mark as Bestseller
-              </label>
+              <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type='checkbox' id='bestseller' className="w-4 h-4" />
+              <label className='cursor-pointer font-medium' htmlFor='bestseller'>Mark as Bestseller</label>
             </div>
             
             {/* Action Buttons */}
