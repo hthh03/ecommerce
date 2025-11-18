@@ -32,10 +32,9 @@ const addProduct = async (req, res) => {
             bestseller: bestseller === "true" ? true : false,
             sizes: parsedSizes,
             image: imagesUrl,
+            isActive: true, // Mặc định là active khi thêm mới
             date: Date.now()
         }
-
-        console.log(productData);
 
         const product = new productModel(productData);
         await product.save()
@@ -47,12 +46,25 @@ const addProduct = async (req, res) => {
     }
 }
 
-// function for list product 
+// function for list product (CHO KHÁCH HÀNG)
+// Chỉ trả về các sản phẩm đang 'Active'
 const listProducts = async (req,res) => {
+    try {
+        const products = await productModel.find({ isActive: true });
+        res.json({success:true,products})
+    } catch (error) {
+        console.log(error)
+        res.json({success: false, message: error.message})
+    }
+}
+
+// function for list ALL product (CHO ADMIN)
+// Trả về tất cả sản phẩm, kể cả sản phẩm 'Disabled'
+const listAllProductsAdmin = async (req,res) => {
     try {
         const products = await productModel.find({});
         res.json({success:true,products})
-    } catch (error) {
+    } catch (error) { // <-- LỖI ĐÃ ĐƯỢC SỬA Ở ĐÂY
         console.log(error)
         res.json({success: false, message: error.message})
     }
@@ -82,9 +94,23 @@ const singleProduct = async (req,res) => {
     }
 }
 
+// function for toggle product active status (HÀM MỚI)
+const toggleProductStatus = async (req,res) => {
+    try {
+        const { productId, status } = req.body;
+        await productModel.findByIdAndUpdate(productId, { isActive: status });
+        res.json({success:true, message: `Product status updated to ${status ? 'Active' : 'Disabled'}`})
+    } catch (error) {
+        console.log(error)
+        res.json({success: false, message: error.message})
+    }
+}
+
+// function for update product (ĐÃ CẬP NHẬT)
 const updateProduct = async (req, res) => {
     try {
-        const { id, name, description, price, category, subCategory, bestseller, sizes } = req.body;
+        // Thêm 'isActive'
+        const { id, name, description, price, category, subCategory, bestseller, sizes, isActive } = req.body;
 
         // Tìm product cần update
         const product = await productModel.findById(id);
@@ -103,6 +129,7 @@ const updateProduct = async (req, res) => {
             subCategory,
             bestseller: bestseller === "true" ? true : false,
             sizes: parsedSizes,
+            isActive: isActive === 'true' ? true : false, // Chuyển đổi string từ form-data
             date: Date.now()
         };
 
@@ -138,4 +165,12 @@ const updateProduct = async (req, res) => {
     }
 };
 
-export {addProduct, listProducts, removeProduct, singleProduct, updateProduct}
+export {
+    addProduct, 
+    listProducts, 
+    removeProduct, 
+    singleProduct, 
+    updateProduct,
+    listAllProductsAdmin, // Export hàm mới
+    toggleProductStatus   // Export hàm mới
+}

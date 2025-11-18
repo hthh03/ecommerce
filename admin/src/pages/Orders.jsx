@@ -11,6 +11,9 @@ const Orders = ({ token }) => {
   const [cancelReason, setCancelReason] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // 1. THÊM STATE CHO LOGIC TỒN KHO
+  const [stockAction, setStockAction] = useState("refund"); // 'refund', 'setZero', 'noChange'
+
   const fetchAllOrders = async () => {
     if (!token) return;
     try {
@@ -63,6 +66,7 @@ const Orders = ({ token }) => {
     }
   };
   
+  // 2. CẬP NHẬT HÀM HỦY ĐƠN
   const handleCancelOrder = async () => {
     if (!selectedOrder || !cancelReason.trim()) {
       toast.error("Please provide a cancellation reason");
@@ -75,7 +79,8 @@ const Orders = ({ token }) => {
         backendUrl + "/api/order/admin-cancel",
         { 
           orderId: selectedOrder._id, 
-          reason: cancelReason 
+          reason: cancelReason,
+          stockAction: stockAction // Gửi kèm hành động tồn kho
         },
         { headers: { token } }
       );
@@ -124,6 +129,8 @@ const Orders = ({ token }) => {
   const openCancelModal = (order) => {
     setSelectedOrder(order);
     setShowCancelModal(true);
+    setCancelReason(""); // Reset lý do
+    setStockAction("refund"); // Reset tồn kho về mặc định
   };
 
   const closeCancelModal = () => {
@@ -244,7 +251,7 @@ const Orders = ({ token }) => {
 
             <div className="flex justify-between gap-2">
               {!order.cancelled && 
-               ['Order Placed', 'Packing'].includes(order.status) && (
+                ['Order Placed', 'Packing'].includes(order.status) && (
                 <button
                   onClick={() => openCancelModal(order)}
                   className="px-3 py-2 bg-yellow-500 text-white text-sm rounded-lg hover:bg-yellow-600"
@@ -277,6 +284,7 @@ const Orders = ({ token }) => {
         <p className="text-gray-500 text-center mt-10">No orders available.</p>
       )}
 
+      {/* 3. CẬP NHẬT MODAL VỚI LOGIC TỒN KHO */}
       {showCancelModal && (
         <div className="modal-overlay">
           <div className="modal-container">
@@ -310,7 +318,8 @@ const Orders = ({ token }) => {
                 </div>
               )}
 
-              <div>
+              {/* Lý do hủy */}
+              <div className="mb-4">
                 <label className="form-label required">
                   Cancellation Reason:
                 </label>
@@ -322,6 +331,60 @@ const Orders = ({ token }) => {
                   rows="3"
                 />
               </div>
+
+              {/* Lựa chọn tồn kho */}
+              <div>
+                <label className="form-label">
+                  Stock Management
+                </label>
+                <div className='flex flex-col gap-2 text-sm text-gray-700'>
+                  <label className='flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50'>
+                    <input 
+                      type="radio" 
+                      name="stockAction" 
+                      value="refund"
+                      checked={stockAction === 'refund'}
+                      onChange={(e) => setStockAction(e.target.value)}
+                      className='w-4 h-4 accent-blue-600'
+                    />
+                    <div>
+                      <p className='font-medium'>Refund Stock (Default)</p>
+                      <p className='text-xs text-gray-500'>Add items back to inventory.</p>
+                    </div>
+                  </label>
+                  
+                  <label className='flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50'>
+                    <input 
+                      type="radio" 
+                      name="stockAction" 
+                      value="setZero"
+                      checked={stockAction === 'setZero'}
+                      onChange={(e) => setStockAction(e.target.value)}
+                      className='w-4 h-4 accent-red-600'
+                    />
+                    <div>
+                      <p className='font-medium text-red-700'>Set Stock to 0 (Lock)</p>
+                      <p className='text-xs text-gray-500'>Mark item as 'Out of Stock'.</p>
+                    </div>
+                  </label>
+
+                   <label className='flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50'>
+                    <input 
+                      type="radio" 
+                      name="stockAction" 
+                      value="noChange"
+                      checked={stockAction === 'noChange'}
+                      onChange={(e) => setStockAction(e.target.value)}
+                      className='w-4 h-4 accent-gray-500'
+                    />
+                    <div>
+                      <p className='font-medium'>No Stock Change</p>
+                      <p className='text-xs text-gray-500'>Do not add/remove stock.</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
             </div>
             
             <div className="modal-actions">

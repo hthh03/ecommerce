@@ -154,7 +154,6 @@ const verifyStripe = async (req, res) => {
             if (order) {
                 await userModel.findByIdAndUpdate(order.userId, { cartData: {} });
             }
-            // SỬA LỖI: Trả về JSON, không redirect
             res.json({ success: true }); 
         } else {
             const order = await orderModel.findById(orderId);
@@ -168,7 +167,6 @@ const verifyStripe = async (req, res) => {
                 }
             }
             await orderModel.findByIdAndDelete(orderId);
-            // SỬA LỖI: Trả về JSON, không redirect
             res.json({ success: false }); 
         }
     } catch (error) {
@@ -177,30 +175,49 @@ const verifyStripe = async (req, res) => {
     }
 };
 
-// Cancel Order Function
+// ==========================================================
+// C-ancel Order Function (ĐÃ CẬP NHẬT)
+// ==========================================================
 const cancelOrder = async (req, res) => {
     try {
-        const { orderId, reason } = req.body;
+        // Nhận 'reason' và 'stockAction' từ req.body
+        const { orderId, reason, stockAction } = req.body;
         const order = await orderModel.findById(orderId);
         
          if (!order) {
             return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
         }
 
-        // --- LOGIC HOÀN KHO KHI HỦY ĐƠN ---
-        // Chỉ hoàn kho nếu đơn hàng chưa bị hủy trước đó để tránh lỗi cộng dồn
+        // --- LOGIC HOÀN KHO CÓ ĐIỀU KIỆN ---
         if (!order.cancelled) {
+            // Nếu không có stockAction (từ khách hàng), mặc định là 'refund'
+            const action = stockAction || 'refund'; 
+
             for (const item of order.items) {
-                await productModel.updateOne(
-                    { _id: item.productId, 'sizes.size': item.size },
-                    { $inc: { 'sizes.$.stock': item.quantity } }
-                );
+                
+                if (action === 'refund') {
+                    // 1. CỘNG HÀNG TRỞ LẠI (Mặc định)
+                    await productModel.updateOne(
+                        { _id: item.productId, 'sizes.size': item.size },
+                        { $inc: { 'sizes.$.stock': item.quantity } }
+                    );
+
+                } else if (action === 'setZero') {
+                    // 2. KHÓA SẢN PHẨM (Set stock = 0)
+                    await productModel.updateOne(
+                        { _id: item.productId, 'sizes.size': item.size },
+                        { $set: { 'sizes.$.stock': 0 } }
+                    );
+                
+                }
+                // 3. Nếu action === 'noChange', không làm gì
             }
         }
         // --- KẾT THÚC LOGIC HOÀN KHO ---
 
         let refundResult = null;
 
+        // Logic hoàn tiền Stripe
         if (order.paymentMethod === 'Stripe' && order.payment) {
             try {
 
@@ -239,10 +256,12 @@ const cancelOrder = async (req, res) => {
             }
         }
 
+        // Dữ liệu để cập nhật đơn hàng
         const updateData = {
             status: 'Cancelled',
             cancelled: true,
             cancelledAt: new Date(),
+            cancelReason: reason // <-- ĐÃ THÊM: Lưu lý do
         };
 
         if (refundResult) {
@@ -338,7 +357,6 @@ const allOrders = async (req, res) => {
 // Orders of logged-in user
 const userOrders = async (req, res) => {
     try {
-        // SỬA LỖI Ở ĐÂY: Lấy userId từ middleware
         const userId = req.userId; 
         const orders = await orderModel.find({ userId: userId });
         res.json({ success: true, orders });
