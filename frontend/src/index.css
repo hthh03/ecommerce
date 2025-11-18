@@ -26,9 +26,6 @@ a.active hr{
     }
 }
 
-/* Add this CSS to your global styles or component styles */
-
-/* Modal Overlay with backdrop blur */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -41,7 +38,6 @@ a.active hr{
   animation: fadeIn 0.2s ease-out;
 }
 
-/* Modal Container */
 .modal-container {
   background: white;
   padding: 1.5rem;
@@ -56,7 +52,6 @@ a.active hr{
   animation: slideUp 0.3s ease-out;
 }
 
-/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -77,7 +72,6 @@ a.active hr{
   }
 }
 
-/* Modal Header */
 .modal-header {
   border-bottom: 1px solid #e5e7eb;
   padding-bottom: 1rem;
@@ -91,7 +85,6 @@ a.active hr{
   margin: 0;
 }
 
-/* Modal Body */
 .modal-body {
   margin-bottom: 1.5rem;
 }
@@ -127,7 +120,6 @@ a.active hr{
   margin: 0.5rem 0 0 0;
 }
 
-/* Form Elements */
 .form-label {
   display: block;
   font-weight: 500;
@@ -170,7 +162,6 @@ a.active hr{
   margin-top: 0.25rem;
 }
 
-/* Modal Actions */
 .modal-actions {
   display: flex;
   gap: 0.75rem;
@@ -215,7 +206,6 @@ a.active hr{
   background: #dc2626;
 }
 
-/* Loading spinner */
 .spinner {
   width: 1rem;
   height: 1rem;
@@ -231,7 +221,6 @@ a.active hr{
   }
 }
 
-/* Responsive */
 @media (max-width: 640px) {
   .modal-container {
     margin: 0.5rem;

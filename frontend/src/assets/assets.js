@@ -1,5 +1,4 @@
 import logo from './logo.png'
-import hero_img from './hero_img.png'
 import cart_icon from './cart_icon.png'
 import bin_icon from './bin_icon.png'
 import dropdown_icon from './dropdown_icon.png'
@@ -17,9 +16,12 @@ import razorpay_logo from './razorpay_logo.png'
 import stripe_logo from './stripe_logo.png'
 import cross_icon from './cross_icon.png'
 
+import banner1 from './banner1.png'; 
+import banner2 from './banner2.jpg';
+import banner3 from './banner3.png';
+
 export const assets = {
     logo,
-    hero_img,
     cart_icon,
     dropdown_icon,
     exchange_icon,
@@ -35,5 +37,25 @@ export const assets = {
     contact_img,
     razorpay_logo,
     stripe_logo,
-    cross_icon
+    cross_icon,
+    banners: [ 
+        {
+            image: banner1,
+            title: "OUR BESTSELLERS",
+            subtitle: "Latest Arrivals",
+            link: "/collection"
+        },
+        {
+            image: banner2,
+            title: "NEW COLLECTION",
+            subtitle: "Sparkling Elegance",
+            link: "/collection"
+        },
+        {
+            image: banner3,
+            title: "BESTSELLER",
+            subtitle: "Up to 30% OFF",
+            link: "/collection"
+        }
+    ]
 }
