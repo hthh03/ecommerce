@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 
 const Verify = () => {
-    const { token, backendUrl } = useContext(ShopContext);
+    const { token, backendUrl, getProductsData, setCartItems } = useContext(ShopContext);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
@@ -13,23 +13,22 @@ const Verify = () => {
     const orderId = searchParams.get('orderId');
 
     const verifyPayment = async () => {
-        console.log("Attempting to verify payment. Token available:", !!token);
-
-        if (!token) {
-            return;
-        }
+        if (!token) return;
 
         try {
-            console.log("Sending verification request to backend with orderId:", orderId);
             const response = await axios.post(
                 `${backendUrl}/api/order/verifyStripe`,
                 { success, orderId },
                 { headers: { token } }
             );
 
-            console.log("Backend response:", response.data);
-
             if (response.data.success) {
+                // 2. XÓA GIỎ HÀNG TRÊN FRONTEND NGAY LẬP TỨC
+                setCartItems({}); 
+                
+                // Cập nhật lại tồn kho mới nhất
+                await getProductsData();
+
                 toast.success("Payment Successful!");
                 navigate('/orders');
             } else {
@@ -37,7 +36,7 @@ const Verify = () => {
                 navigate('/'); 
             }
         } catch (error) {
-            console.error("Verification API call failed:", error);
+            console.error(error);
             toast.error("An error occurred during payment verification.");
             navigate('/'); 
         }
@@ -47,13 +46,12 @@ const Verify = () => {
         if (token && success && orderId) {
             verifyPayment();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token, success, orderId]); // Phụ thuộc vào token, success, và orderId
+    }, [token, success, orderId]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
             <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-black"></div>
-            <p className="text-gray-600 text-lg">Verifying your payment, please wait...</p>
+            <p className="text-gray-600 text-lg">Verifying your payment...</p>
         </div>
     );
 };

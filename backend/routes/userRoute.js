@@ -1,6 +1,6 @@
 import express from 'express';
 import { adminLogin, registerUser, loginUser, getProfile, updateProfile, changePassword, forgotPassword, resetPassword} from '../controllers/userController.js'
-import { listUsers, blockUser, deleteUser, getUserOrders } from '../controllers/userController.js'
+import { listUsers, blockUser, deleteUser, getUserOrders, googleLogin } from '../controllers/userController.js'
 import authUser from '../middleware/auth.js';
 import upload from "../middleware/upload.js"; 
 import adminAuth from "../middleware/adminAuth.js";
@@ -16,6 +16,7 @@ userRouter.put("/profile", authUser, upload.single("avatar"), updateProfile);
 userRouter.put("/change-password", authUser, changePassword);
 userRouter.post('/forgot-password', forgotPassword);
 userRouter.post('/reset-password', resetPassword);
+userRouter.post('/google-login', googleLogin);
 
 // Admin routes for user management
 userRouter.post('/list', adminAuth, listUsers)

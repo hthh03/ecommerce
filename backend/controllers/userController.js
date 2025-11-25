@@ -1,6 +1,7 @@
 import validator from "validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from 'google-auth-library';
 import { cloudinary } from "../config/cloudinary.js";
 import fs from "fs";
 import userModel from "../models/userModel.js";
@@ -130,13 +131,36 @@ const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
     const user = await userModel.findById(req.userId);
+
     if (!user) return res.json({ success: false, message: "User not found" });
 
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.json({ success: false, message: "Old password is incorrect" });
+    // --- LOGIC KIỂM TRA MẬT KHẨU CŨ (QUAN TRỌNG) ---
+    // Điều kiện cần kiểm tra mật khẩu cũ:
+    // 1. User đăng ký bằng Email thường (authType !== 'google')
+    // 2. HOẶC User đăng ký bằng Google NHƯNG ĐÃ đặt mật khẩu rồi (isPasswordSet === true)
+    
+    const shouldCheckOldPass = user.authType !== 'google' || user.isPasswordSet;
 
+    if (shouldCheckOldPass) {
+        if (!oldPassword) {
+            return res.json({ success: false, message: "Current password is required" });
+        }
+        
+        // So sánh mật khẩu cũ với mật khẩu trong DB
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.json({ success: false, message: "Current password is incorrect" }); // <-- Chặn đứng tại đây nếu sai pass
+        }
+    }
+    // --------------------------------------------------
+
+    // Nếu vượt qua kiểm tra trên thì mới cho đổi pass
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
+    
+    // Đánh dấu là đã có mật khẩu
+    user.isPasswordSet = true;
+
     await user.save();
 
     res.json({ success: true, message: "Password updated successfully" });
@@ -145,7 +169,6 @@ const changePassword = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 // 🔹 Forgot Password - Send New Password
 const forgotPassword = async (req, res) => {
@@ -334,5 +357,52 @@ const getUserOrders = async (req, res) => {
     }
 }
 
+const googleLogin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        const { email, name, picture } = payload; 
+
+        // Kiểm tra user
+        let user = await userModel.findOne({ email });
+
+        if (user) {
+            // Đã có -> Login
+            if (!user.avatar) {
+                user.avatar = picture;
+                await user.save();
+            }
+        } else {
+            // Chưa có -> TẠO MỚI (Khắc phục lỗi User not found)
+            const randomPassword = Math.random().toString(36).slice(-8);
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+            const newUser = new userModel({
+                name: name,
+                email: email,
+                password: hashedPassword, 
+                avatar: picture,
+                authType: 'google',
+                isPasswordSet: false
+            });
+            user = await newUser.save();
+        }
+
+        const token = createToken(user._id);
+        res.json({ success: true, token });
+
+    } catch (error) {
+        console.log("Google Login Error:", error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 export { loginUser, registerUser, adminLogin, getProfile, updateProfile, changePassword, forgotPassword, resetPassword,
-  listUsers, blockUser, deleteUser, getUserOrders};
+  listUsers, blockUser, deleteUser, getUserOrders, googleLogin};

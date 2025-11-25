@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 const PlaceOrder = () => {
   const [method, setMethod] = useState('cod');
   const navigate = useNavigate();
-  const { backendUrl, token, cartItems, setCartItems, getCartAmount, delivery_fee, products } = useContext(ShopContext);
+  const { backendUrl, token, setToken, cartItems, setCartItems, getCartAmount, delivery_fee, products, getProductsData } = useContext(ShopContext);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -24,11 +24,11 @@ const PlaceOrder = () => {
     phone: ''
   });
 
- const formatPrice = (price) => {
-  const num = parseFloat(price);
-  if (isNaN(num)) return 0;
-  return Math.round(num * 100) / 100;
-};
+  const formatPrice = (price) => {
+    const num = parseFloat(price);
+    if (isNaN(num)) return 0;
+    return Math.round(num * 100) / 100;
+  };
 
   const getTotalAmount = () => {
     const cartTotal = getCartAmount();
@@ -43,19 +43,15 @@ const PlaceOrder = () => {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
-    // Validation
-    if (!formData.firstName.trim() || !formData.lastName.trim()) {
-      toast.error('Please enter your full name');
-      return;
-    }
     
-    if (!formData.email.trim()) {
-      toast.error('Please enter your email address');
-      return;
+    if (!token) {
+        toast.error("You must be logged in to place an order.");
+        navigate('/login');
+        return;
     }
-    
-    if (!formData.phone.trim()) {
-      toast.error('Please enter your phone number');
+
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.street.trim()) {
+      toast.error('Please fill in all required delivery information.');
       return;
     }
 
@@ -67,9 +63,8 @@ const PlaceOrder = () => {
             if (productInfo) {
                 for (const size in cartItems[itemId]) {
                     if (cartItems[itemId][size] > 0) {
-                        // Tạo một đối tượng mới, gọn gàng với các trường cần thiết
                         orderItems.push({
-                            productId: productInfo._id, // QUAN TRỌNG: Thêm productId
+                            productId: productInfo._id,
                             name: productInfo.name,
                             price: formatPrice(productInfo.price),
                             image: productInfo.image[0],
@@ -80,6 +75,7 @@ const PlaceOrder = () => {
                 }
             }
         }
+      
       if (orderItems.length === 0) {
         toast.error('Your cart is empty');
         return;
@@ -91,22 +87,12 @@ const PlaceOrder = () => {
         amount: getTotalAmount(), 
       };
 
-      console.log('Order Data:', {
-        cartAmount: getCartAmount(),
-        deliveryFee: delivery_fee,
-        totalAmount: getTotalAmount(),
-        items: orderItems.map(item => ({
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        }))
-      });
-
       switch (method) {
         case 'cod': {
           const response = await axios.post(backendUrl + '/api/order/place', orderData, { headers: { token } });
           if (response.data.success) {
             setCartItems({});
+            await getProductsData(); 
             toast.success('Order placed successfully!');
             navigate('/orders');
           } else {
@@ -125,10 +111,16 @@ const PlaceOrder = () => {
           
           if (responseStripe.data.success) {
             const { session_url } = responseStripe.data;
-            toast.info('Redirecting to payment...');
             window.location.replace(session_url);
           } else {
-            toast.error(responseStripe.data.message);
+            if (responseStripe.data.message.includes("Not Authorized")) {
+                setToken('');
+                localStorage.removeItem('token');
+                toast.error("Session expired. Please login again.");
+                navigate('/login');
+            } else {
+                toast.error(responseStripe.data.message);
+            }
           }
           break; 
         }
@@ -138,148 +130,93 @@ const PlaceOrder = () => {
           break;
       }
     } catch (error) {
-      console.error('Order submission error:', error);
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error('Something went wrong. Please try again.');
-      }
+      console.error(error);
+      toast.error(error.message);
     }
   };
 
+  // Styles chung cho input
+  const inputStyle = "w-full border border-gray-300 rounded-md px-4 py-2.5 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors bg-white";
+
   return (
-    <form onSubmit={onSubmitHandler} className="flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t">
-
-      <div className="flex flex-col gap-4 w-full sm:max-w-[480px]">
-        <div className="text-xl sm:text-2xl my-3">
-          <Title text1={'DELIVERY'} text2={'INFORMATION'} />
-        </div>
-        <div className="flex gap-3">
-          <input 
-            required 
-            onChange={onChangeHandler} 
-            name="firstName" 
-            value={formData.firstName} 
-            className="border border-gray-300 rounded py-1.5 px-3.5 w-full focus:border-black focus:outline-none" 
-            type="text" 
-            placeholder="First name" 
-          />
-          <input 
-            required 
-            onChange={onChangeHandler} 
-            name="lastName" 
-            value={formData.lastName} 
-            className="border border-gray-300 rounded py-1.5 px-3.5 w-full focus:border-black focus:outline-none" 
-            type="text" 
-            placeholder="Last name" 
-          />
-        </div>
-        <input 
-          required 
-          onChange={onChangeHandler} 
-          name="email" 
-          value={formData.email} 
-          className="border border-gray-300 rounded py-1.5 px-3.5 w-full focus:border-black focus:outline-none" 
-          type="email" 
-          placeholder="Email address" 
-        />
-        <input 
-          required 
-          onChange={onChangeHandler} 
-          name="street" 
-          value={formData.street} 
-          className="border border-gray-300 rounded py-1.5 px-3.5 w-full focus:border-black focus:outline-none" 
-          type="text" 
-          placeholder="Street" 
-        />
-        <div className="flex gap-3">
-          <input 
-            required 
-            onChange={onChangeHandler} 
-            name="city" 
-            value={formData.city} 
-            className="border border-gray-300 rounded py-1.5 px-3.5 w-full focus:border-black focus:outline-none" 
-            type="text" 
-            placeholder="City" 
-          />
-          <input 
-            required 
-            onChange={onChangeHandler} 
-            name="state" 
-            value={formData.state} 
-            className="border border-gray-300 rounded py-1.5 px-3.5 w-full focus:border-black focus:outline-none" 
-            type="text" 
-            placeholder="State" 
-          />
-        </div>
-        <div className="flex gap-3">
-          <input 
-            required 
-            onChange={onChangeHandler} 
-            name="zipcode" 
-            value={formData.zipcode} 
-            className="border border-gray-300 rounded py-1.5 px-3.5 w-full focus:border-black focus:outline-none" 
-            type="number" 
-            placeholder="Zipcode" 
-          />
-          <input 
-            required 
-            onChange={onChangeHandler} 
-            name="country" 
-            value={formData.country} 
-            className="border border-gray-300 rounded py-1.5 px-3.5 w-full focus:border-black focus:outline-none" 
-            type="text" 
-            placeholder="Country" 
-          />
-        </div>
-        <input 
-          required 
-          onChange={onChangeHandler} 
-          name="phone" 
-          value={formData.phone} 
-          className="border border-gray-300 rounded py-1.5 px-3.5 w-full focus:border-black focus:outline-none" 
-          type="tel" 
-          placeholder="Phone" 
-        />
-      </div>
-
-      <div className="mt-8">
-        <div className="mt-8 min-w-80">
-          <CartTotal />
-        </div>
-        <div className="mt-12">
-          <Title text1={'PAYMENT'} text2={'METHOD'} />
-          <div className="flex gap-3 flex-col lg:flex-row">
-            <div 
-              onClick={() => setMethod('stripe')} 
-              className="flex items-center gap-3 border p-2 px-3 cursor-pointer hover:border-gray-400 transition"
-            >
-              <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'stripe' ? 'bg-green-400' : ''}`}></p>
-              <img className="h-5 mx-4" src={assets.stripe_logo} alt="Stripe" />
-            </div>
-            <div 
-              onClick={() => setMethod('cod')} 
-              className="flex items-center gap-3 border p-2 px-3 cursor-pointer hover:border-gray-400 transition"
-            >
-              <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'cod' ? 'bg-green-400' : ''}`}></p>
-              <p className="text-gray-500 text-sm font-medium mx-4">CASH ON DELIVERY</p>
-            </div>
+    <form onSubmit={onSubmitHandler} className="min-h-[80vh] pt-10 px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]">
+      
+      <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+        
+        {/* --- LEFT SIDE: DELIVERY FORM --- */}
+        <div className="flex-1 flex flex-col gap-6">
+          <div className="text-2xl font-medium">
+            <Title text1={'DELIVERY'} text2={'INFORMATION'} />
           </div>
           
-          {!method && (
-            <p className="text-red-500 text-sm mt-2">Please select a payment method</p>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input required name="firstName" value={formData.firstName} onChange={onChangeHandler} className={inputStyle} type="text" placeholder="First name" />
+            <input required name="lastName" value={formData.lastName} onChange={onChangeHandler} className={inputStyle} type="text" placeholder="Last name" />
+          </div>
           
-          <div className="w-full text-end mt-8">
-            <button 
-              type="submit" 
-              className="bg-black text-white px-16 py-3 text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!method}
-            >
-              PLACE ORDER
-            </button>
+          <input required name="email" value={formData.email} onChange={onChangeHandler} className={inputStyle} type="email" placeholder="Email address" />
+          <input required name="street" value={formData.street} onChange={onChangeHandler} className={inputStyle} type="text" placeholder="Street address" />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input required name="city" value={formData.city} onChange={onChangeHandler} className={inputStyle} type="text" placeholder="City" />
+            <input required name="state" value={formData.state} onChange={onChangeHandler} className={inputStyle} type="text" placeholder="State/Province" />
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input required name="zipcode" value={formData.zipcode} onChange={onChangeHandler} className={inputStyle} type="number" placeholder="Zipcode" />
+            <input required name="country" value={formData.country} onChange={onChangeHandler} className={inputStyle} type="text" placeholder="Country" />
+          </div>
+          
+          <input required name="phone" value={formData.phone} onChange={onChangeHandler} className={inputStyle} type="tel" placeholder="Phone number" />
+        </div>
+
+        <div className="flex-1 lg:max-w-[450px]">
+          <div className="bg-gray-50 p-6 rounded-xl shadow-sm border border-gray-100 sticky top-24">
+            <CartTotal />
+
+            <div className="mt-8">
+              <h3 className="text-md font-semibold text-gray-700 mb-4 uppercase tracking-wide">Payment Method</h3>
+              
+              <div className="flex flex-col gap-3">
+                <div 
+                  onClick={() => setMethod('stripe')} 
+                  className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all duration-200 ${method === 'stripe' ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'border-gray-200 hover:bg-white'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${method === 'stripe' ? 'border-green-600' : 'border-gray-400'}`}>
+                        {method === 'stripe' && <div className="w-2 h-2 bg-green-600 rounded-full"></div>}
+                    </div>
+                    <span className="font-medium text-gray-700">Stripe (Credit Card)</span>
+                  </div>
+                  <img className="h-6" src={assets.stripe_logo} alt="Stripe" />
+                </div>
+
+                {/* COD Option */}
+                <div 
+                  onClick={() => setMethod('cod')} 
+                  className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all duration-200 ${method === 'cod' ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'border-gray-200 hover:bg-white'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${method === 'cod' ? 'border-green-600' : 'border-gray-400'}`}>
+                         {method === 'cod' && <div className="w-2 h-2 bg-green-600 rounded-full"></div>}
+                    </div>
+                    <span className="font-medium text-gray-700">Cash on Delivery</span>
+                  </div>
+                  <span className="text-gray-400 text-sm">Pay when you receive</span>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button 
+                type="submit" 
+                className="w-full bg-black text-white mt-8 py-4 rounded-lg font-semibold text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors shadow-md"
+              >
+                Place Order
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
     </form>
   );

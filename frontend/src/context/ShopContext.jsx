@@ -205,6 +205,7 @@ const ShopContextProvider = (props) => {
     token,
     getOrderTotal,
     subCategoryList,
+    getProductsData,
   };
 
   return (

@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
     address: {type: String, default: ""},
     resetRequired: { type: Boolean, default: false },
     blocked: { type: Boolean, default: false },
+    authType: { type: String, default: 'local' },
+    isPasswordSet: { type: Boolean, default: true },
     date: { type: Date, default: Date.now }
 },{minimize:false})
 

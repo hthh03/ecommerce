@@ -5,7 +5,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const Orders = () => {
-  const { backendUrl, token, currency, getOrderTotal, delivery_fee } = useContext(ShopContext);
+  const { backendUrl, token, currency, getOrderTotal, delivery_fee, getProductsData } = useContext(ShopContext);
   
   // --- State cho Đơn hàng ---
   const [orders, setOrders] = useState([]);
@@ -52,6 +52,7 @@ const Orders = () => {
       toast.error("Please provide a cancellation reason");
       return;
     }
+
     setLoading(true);
     try {
       const response = await axios.post(
@@ -66,10 +67,18 @@ const Orders = () => {
       if (response.data.success) {
         toast.success("Order cancelled successfully");
         if (response.data.refund) {
-          toast.info(`Refund initiated: ${currency}${response.data.refund.amount}`);
+          toast.info(`Refund initiated: ${currency}${response.data.refund.amount}`, {
+            autoClose: 5000
+          });
         }
-        closeCancelModal();
-        loadOrderData();
+        
+        // 2. GỌI HÀM NÀY ĐỂ CẬP NHẬT LẠI SỐ LƯỢNG TỒN KHO TỨC THÌ
+        await getProductsData(); 
+
+        setShowCancelModal(false);
+        setCancelReason("");
+        setSelectedOrder(null);
+        loadOrderData(); // Tải lại danh sách đơn hàng
       } else {
         toast.error(response.data.message);
       }
@@ -179,7 +188,7 @@ const Orders = () => {
   useEffect(() => {
     loadOrderData();
   }, [token]);
-
+  
   return (
     <div className="border-t pt-16">
       <div className="text-2xl">
@@ -187,87 +196,107 @@ const Orders = () => {
       </div>
 
       <div className="mt-6">
-        {orders.map((order) => (
-          <div key={order._id} className={`border rounded-xl shadow-sm p-6 mb-6 bg-white hover:shadow-md transition`}>
-            
-            {/* --- HEADER ĐƠN HÀNG --- */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 mb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Order <span className="text-blue-600">#{order._id.slice(-6)}</span>
-                </h3>
-                <div className="flex flex-wrap gap-2 mt-2">
-                   <p className="text-sm text-gray-500">Date: {new Date(order.date).toDateString()}</p>
-                   <p className="text-sm text-gray-500">Payment: {order.paymentMethod}</p>
-                </div>
-                {/* Hiển thị lý do hủy */}
-                {order.cancelled && (
-                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                    <p className="text-red-800 text-sm font-medium">❌ CANCELLED</p>
-                    <p className="text-red-600 text-xs">Reason: {order.cancelReason || 'N/A'}</p>
+        {/* KIỂM TRA: Nếu có đơn hàng thì map, không có thì hiện thông báo */}
+        {orders.length > 0 ? (
+          orders.map((order) => (
+            <div key={order._id} className="border rounded-xl shadow-sm p-6 mb-6 bg-white hover:shadow-md transition">
+              
+              {/* --- HEADER ĐƠN HÀNG --- */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Order <span className="text-blue-600">#{order._id.slice(-6)}</span>
+                  </h3>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                     <p className="text-sm text-gray-500">Date: {new Date(order.date).toDateString()}</p>
+                     <p className="text-sm text-gray-500">Payment: {order.paymentMethod}</p>
                   </div>
-                )}
-              </div>
-
-              <div className="flex flex-col md:items-end gap-3 mt-4 md:mt-0">
-                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(order.status, order.cancelled)}`}>
-                  {order.cancelled ? 'Cancelled' : order.status}
-                </span>
-                <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Total: {currency} {(getOrderTotal(order.items) + delivery_fee).toFixed(2)}</span>
-                </div>
-                
-                <div className="flex gap-2">
-                   <button onClick={() => toggleExpand(order._id)} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-100">
-                      {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
-                   </button>
-                   {/* Nút Hủy chỉ hiện khi chưa giao hàng */}
-                   {!order.cancelled && ['Order Placed', 'Packing'].includes(order.status) && (
-                      <button onClick={() => openCancelModal(order)} className="px-4 py-2 text-sm bg-yellow-500 text-white rounded-md">Cancel</button>
-                   )}
-                   {order.refund && order.paymentMethod === 'Stripe' && (
-                      <button onClick={() => checkRefundStatus(order._id)} className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md">Refund Status</button>
-                   )}
-                </div>
-              </div>
-            </div>
-
-            {/* --- CHI TIẾT SẢN PHẨM (MỞ RỘNG) --- */}
-            {expandedOrderId === order._id && (
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-800 border-b pb-2">Order Items</h4>
-                {order.items.map((item, i) => (
-                  <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-md" />
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">{item.name}</p>
-                      <p className="text-sm text-gray-500">Size: {item.size} | Qty: {item.quantity}</p>
-                      <p className="text-sm text-gray-600">{currency}{item.price}</p>
+                  {/* Hiển thị lý do hủy */}
+                  {order.cancelled && (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                      <p className="text-red-800 text-sm font-medium">❌ CANCELLED</p>
+                      <p className="text-red-600 text-xs">Reason: {order.cancelReason || 'N/A'}</p>
                     </div>
+                  )}
+                </div>
 
-                    {/* NÚT COMMENT / EDIT - Chỉ hiện khi đã giao hàng */}
-                    {order.status === 'Delivered' && (
-                      <button
-                        onClick={() => openReviewModal(item, order._id)}
-                        className="px-4 py-2 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition self-center shadow-sm whitespace-nowrap"
-                      >
-                        Write / Edit Comment
-                      </button>
-                    )}
+                <div className="flex flex-col md:items-end gap-3 mt-4 md:mt-0">
+                  <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(order.status, order.cancelled)}`}>
+                    {order.cancelled ? 'Cancelled' : order.status}
+                  </span>
+                  <div className="flex justify-between text-lg font-bold border-t pt-2">
+                    <span>Total: {currency} {(getOrderTotal(order.items) + delivery_fee).toFixed(2)}</span>
                   </div>
-                ))}
-                
-                {/* Địa chỉ giao hàng */}
-                <div className="border-t pt-4">
-                   <p className="text-sm text-gray-600 font-medium">Delivery Address:</p>
-                   <p className="text-sm text-gray-500">
-                     {order.address.firstName} {order.address.lastName}, {order.address.street}, {order.address.city}
-                   </p>
+                  
+                  <div className="flex gap-2">
+                     <button onClick={() => toggleExpand(order._id)} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-100">
+                        {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
+                     </button>
+                     {/* Nút Hủy chỉ hiện khi chưa giao hàng */}
+                     {!order.cancelled && ['Order Placed', 'Packing'].includes(order.status) && (
+                        <button onClick={() => openCancelModal(order)} className="px-4 py-2 text-sm bg-yellow-500 text-white rounded-md">Cancel</button>
+                     )}
+                     {order.refund && order.paymentMethod === 'Stripe' && (
+                        <button onClick={() => checkRefundStatus(order._id)} className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md">Refund Status</button>
+                     )}
+                  </div>
                 </div>
               </div>
-            )}
+
+              {/* --- CHI TIẾT SẢN PHẨM (MỞ RỘNG) --- */}
+              {expandedOrderId === order._id && (
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-800 border-b pb-2">Order Items</h4>
+                  {order.items.map((item, i) => (
+                    <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-md" />
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800">{item.name}</p>
+                        <p className="text-sm text-gray-500">Size: {item.size} | Qty: {item.quantity}</p>
+                        <p className="text-sm text-gray-600">{currency}{item.price}</p>
+                      </div>
+
+                      {/* NÚT COMMENT / EDIT - Chỉ hiện khi đã giao hàng */}
+                      {order.status === 'Delivered' && (
+                        <button
+                          onClick={() => openReviewModal(item, order._id)}
+                          className="px-4 py-2 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition self-center shadow-sm whitespace-nowrap"
+                        >
+                          Write / Edit Comment
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {/* Địa chỉ giao hàng */}
+                  <div className="border-t pt-4">
+                     <p className="text-sm text-gray-600 font-medium">Delivery Address:</p>
+                     <p className="text-sm text-gray-500">
+                       {order.address.firstName} {order.address.lastName}, {order.address.street}, {order.address.city}
+                     </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          // --- GIAO DIỆN KHI CHƯA CÓ ĐƠN HÀNG ---
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <p className="text-4xl grayscale">📦</p> 
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">You have no orders yet</h3>
+            <p className="text-gray-500 mb-6 max-w-md">
+              Looks like you haven't made your choice yet. Explore our collection and find something you love!
+            </p>
+            <a 
+              href="/collection" 
+              className="px-8 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors shadow-lg"
+            >
+              Start Shopping
+            </a>
           </div>
-        ))}
+        )}
       </div>
 
       {/* --- MODAL HỦY ĐƠN --- */}

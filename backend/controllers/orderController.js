@@ -10,33 +10,47 @@ const deliveryCharge = 10;
 // gateway initialize 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// Helper: Hàm trừ kho an toàn (Ép kiểu số)
+const deductStock = async (productId, size, quantity) => {
+    await productModel.updateOne(
+        { _id: productId, 'sizes.size': size },
+        { $inc: { 'sizes.$.stock': -Number(quantity) } } // Ép về số để trừ chính xác
+    );
+};
+
+// Helper: Hàm cộng kho an toàn
+const restockItem = async (productId, size, quantity) => {
+    await productModel.updateOne(
+        { _id: productId, 'sizes.size': size },
+        { $inc: { 'sizes.$.stock': Number(quantity) } } // Ép về số để cộng chính xác
+    );
+};
+
 // Place order using COD
 const placeOrder = async (req, res) => {
     try {
         const userId = req.userId;   
         const { items, amount, address } = req.body;
 
-        // --- LOGIC QUẢN LÝ TỒN KHO (TRỪ KHO) ---
+        if (!userId) return res.json({ success: false, message: "User ID missing. Login again." });
+
+        // --- VALIDATION TỒN KHO ---
         for (const item of items) {
             const product = await productModel.findById(item.productId);
-            if (!product) {
-                return res.status(404).json({ success: false, message: `Không tìm thấy sản phẩm: ${item.name}` });
-            }
+            if (!product) return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
+
             const sizeVariant = product.sizes.find(s => s.size === item.size);
-            if (!sizeVariant) {
-                return res.status(404).json({ success: false, message: `Không tìm thấy kích cỡ cho sản phẩm: ${item.name}` });
-            }
+            if (!sizeVariant) return res.status(404).json({ success: false, message: `Size not found: ${item.name} (${item.size})` });
+
             if (sizeVariant.stock < item.quantity) {
-                return res.status(400).json({ success: false, message: `Không đủ hàng cho ${item.name} - Cỡ ${item.size}. Chỉ còn ${sizeVariant.stock} sản phẩm.` });
+                return res.status(400).json({ success: false, message: `Not enough stock for ${item.name}. Left: ${sizeVariant.stock}` });
             }
         }
+        
+        // --- TRỪ KHO ---
         for (const item of items) {
-            await productModel.updateOne(
-                { _id: item.productId, 'sizes.size': item.size },
-                { $inc: { 'sizes.$.stock': -item.quantity } }
-            );
+            await deductStock(item.productId, item.size, item.quantity);
         }
-        // --- KẾT THÚC LOGIC TỒN KHO ---
 
         const newOrder = new orderModel({
             userId,
@@ -51,10 +65,10 @@ const placeOrder = async (req, res) => {
 
         await userModel.findByIdAndUpdate(userId, { cartData: {} });
 
-        res.json({ success: true, message: "Đặt hàng thành công" });
+        res.json({ success: true, message: "Order Placed Successfully" });
     } catch (error) {
-        console.error("Lỗi khi đặt hàng (COD):", error);
-        res.status(500).json({ success: false, message: "Đã xảy ra lỗi máy chủ" });
+        console.error("COD Error:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -65,27 +79,28 @@ const placeOrderStripe = async (req, res) => {
         const { items, amount, address } = req.body;
         const { origin } = req.headers;
 
-        // --- LOGIC QUẢN LÝ TỒN KHO (TRỪ KHO) ---
+        // BẢO VỆ: Kiểm tra userId để tránh sập server
+        if (!userId) {
+            return res.json({ success: false, message: "Not Authorized. Please login again." });
+        }
+
+        // --- VALIDATION ---
         for (const item of items) {
             const product = await productModel.findById(item.productId);
-            if (!product) {
-                return res.status(404).json({ success: false, message: `Không tìm thấy sản phẩm: ${item.name}` });
-            }
+            if (!product) return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
+            
             const sizeVariant = product.sizes.find(s => s.size === item.size);
-            if (!sizeVariant) {
-                return res.status(404).json({ success: false, message: `Không tìm thấy kích cỡ cho sản phẩm: ${item.name}` });
-            }
+            if (!sizeVariant) return res.status(404).json({ success: false, message: `Size not found: ${item.name}` });
+            
             if (sizeVariant.stock < item.quantity) {
-                return res.status(400).json({ success: false, message: `Không đủ hàng cho ${item.name} - Cỡ ${item.size}. Chỉ còn ${sizeVariant.stock} sản phẩm.` });
+                return res.status(400).json({ success: false, message: `Stock error: ${item.name}` });
             }
         }
+        
+        // --- TRỪ KHO ---
         for (const item of items) {
-            await productModel.updateOne(
-                { _id: item.productId, 'sizes.size': item.size },
-                { $inc: { 'sizes.$.stock': -item.quantity } }
-            );
+            await deductStock(item.productId, item.size, item.quantity);
         }
-        // --- KẾT THÚC LOGIC TỒN KHO ---
 
         const newOrder = new orderModel({
             userId,
@@ -111,7 +126,7 @@ const placeOrderStripe = async (req, res) => {
             price_data: {
                 currency: 'usd',
                 product_data: { name: 'Delivery Charges' },
-                unit_amount: 10 * 100 // Phí giao hàng
+                unit_amount: 10 * 100 
             },
             quantity: 1
         });
@@ -129,8 +144,8 @@ const placeOrderStripe = async (req, res) => {
         res.json({ success: true, session_url: session.url });
     } catch (error)
     {
-        console.error("Lỗi khi đặt hàng (Stripe):", error);
-        res.status(500).json({ success: false, message: "Đã xảy ra lỗi máy chủ" });
+        console.error("Stripe Error:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -146,84 +161,61 @@ const verifyStripe = async (req, res) => {
             }
             res.json({ success: true }); 
         } else {
+            // THANH TOÁN LỖI -> HOÀN LẠI KHO
             const order = await orderModel.findById(orderId);
             if (order) {
-                // Hoàn lại tồn kho khi thanh toán thất bại hoặc bị hủy
                 for (const item of order.items) {
-                    await productModel.updateOne(
-                        { _id: item.productId, 'sizes.size': item.size },
-                        { $inc: { 'sizes.$.stock': item.quantity } }
-                    );
+                    await restockItem(item.productId, item.size, item.quantity);
                 }
             }
             await orderModel.findByIdAndDelete(orderId);
             res.json({ success: false }); 
         }
     } catch (error) {
-        console.error("Error verifying Stripe payment:", error);
-        res.status(500).json({ success: false, message: "Server error during verification" });
+        console.error("Verify Error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
-// ==========================================================
-// C-ancel Order Function (ĐÃ CẬP NHẬT)
-// ==========================================================
+// Cancel Order Function
 const cancelOrder = async (req, res) => {
     try {
-        // Nhận 'reason' và 'stockAction' từ req.body
         const { orderId, reason, stockAction } = req.body;
         const order = await orderModel.findById(orderId);
         
          if (!order) {
-            return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+            return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        // --- LOGIC HOÀN KHO CÓ ĐIỀU KIỆN ---
+        // Logic hoàn kho
         if (!order.cancelled) {
-            // Nếu không có stockAction (từ khách hàng), mặc định là 'refund'
             const action = stockAction || 'refund'; 
 
             for (const item of order.items) {
-                
                 if (action === 'refund') {
-                    // 1. CỘNG HÀNG TRỞ LẠI (Mặc định)
-                    await productModel.updateOne(
-                        { _id: item.productId, 'sizes.size': item.size },
-                        { $inc: { 'sizes.$.stock': item.quantity } }
-                    );
-
+                    await restockItem(item.productId, item.size, item.quantity);
                 } else if (action === 'setZero') {
-                    // 2. KHÓA SẢN PHẨM (Set stock = 0)
                     await productModel.updateOne(
                         { _id: item.productId, 'sizes.size': item.size },
                         { $set: { 'sizes.$.stock': 0 } }
                     );
-                
                 }
-                // 3. Nếu action === 'noChange', không làm gì
             }
         }
-        // --- KẾT THÚC LOGIC HOÀN KHO ---
 
         let refundResult = null;
-
-        // Logic hoàn tiền Stripe
+        // Logic Stripe Refund
         if (order.paymentMethod === 'Stripe' && order.payment) {
             try {
                 const sessions = await stripe.checkout.sessions.list({ limit: 100 });
-                const session = sessions.data.find(s => 
-                    s.metadata && s.metadata.orderId === orderId
-                );
+                const session = sessions.data.find(s => s.metadata && s.metadata.orderId === orderId);
 
                 if (session && session.payment_intent) {
                     const refund = await stripe.refunds.create({
                         payment_intent: session.payment_intent,
                         amount: order.amount * 100, 
                         reason: 'requested_by_customer',
-                        metadata: {
-                            orderId: orderId,
-                            reason: reason || 'Customer requested cancellation'
-                        }
+                        metadata: { orderId: orderId }
                     });
                     refundResult = {
                         refundId: refund.id,
@@ -233,20 +225,16 @@ const cancelOrder = async (req, res) => {
                     };
                 }
             } catch (stripeError) {
-                console.error('Stripe refund error:', stripeError);
-                return res.status(400).json({ 
-                    success: false, 
-                    message: "Failed to process refund: " + stripeError.message 
-                });
+                console.error('Stripe Refund Error:', stripeError);
+                // Không return lỗi ở đây để vẫn cho phép hủy đơn trong DB
             }
         }
 
-        // Dữ liệu để cập nhật đơn hàng
         const updateData = {
             status: 'Cancelled',
             cancelled: true,
             cancelledAt: new Date(),
-            cancelReason: reason // <-- ĐÃ THÊM: Lưu lý do
+            cancelReason: reason // Lưu lý do
         };
 
         if (refundResult) {
@@ -262,11 +250,8 @@ const cancelOrder = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Cancel order error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: error.message 
-        });
+        console.error('Cancel Error:', error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -274,31 +259,18 @@ const cancelOrder = async (req, res) => {
 const checkRefundStatus = async (req, res) => {
     try {
         const { orderId } = req.body;
-        
         const order = await orderModel.findById(orderId);
-        if (!order) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "Order not found" 
-            });
-        }
+        if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
         if (!order.refund || !order.refund.refundId) {
-            return res.json({ 
-                success: true, 
-                message: "No refund found for this order",
-                refund: null
-            });
+            return res.json({ success: true, message: "No refund found", refund: null });
         }
+        
         try {
             const refund = await stripe.refunds.retrieve(order.refund.refundId);
-            
             if (refund.status !== order.refund.status) {
-                await orderModel.findByIdAndUpdate(orderId, {
-                    'refund.status': refund.status
-                });
+                await orderModel.findByIdAndUpdate(orderId, { 'refund.status': refund.status });
             }
-
             res.json({ 
                 success: true, 
                 refund: {
@@ -310,21 +282,11 @@ const checkRefundStatus = async (req, res) => {
                     reason: refund.reason
                 }
             });
-
         } catch (stripeError) {
-            console.error('Stripe refund check error:', stripeError);
-            res.status(400).json({ 
-                success: false, 
-                message: "Failed to check refund status: " + stripeError.message 
-            });
+            res.status(400).json({ success: false, message: stripeError.message });
         }
-
     } catch (error) {
-        console.error('Check refund status error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: error.message 
-        });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -334,8 +296,7 @@ const allOrders = async (req, res) => {
         const orders = await orderModel.find({});
         res.json({ success: true, orders: orders }); 
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: "Lỗi" });
+        res.json({ success: false, message: error.message });
     }
 };
 
@@ -346,30 +307,15 @@ const userOrders = async (req, res) => {
         const orders = await orderModel.find({ userId: userId });
         res.json({ success: true, orders });
     } catch (error) {
-        console.error("Error fetching user orders:", error);
-        res.status(500).json({ success: false, message: "Error fetching user orders" });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
 const removeOrder = async (req, res) => {
   try {
     const { orderId } = req.body;
-
-    if (!orderId) {
-      return res.status(400).json({ success: false, message: "OrderId is required" });
-    }
-
-    const deletedOrder = await orderModel.findByIdAndDelete(orderId);
-
-    if (!deletedOrder) {
-      return res.status(404).json({ success: false, message: "Order not found" });
-    }
-
-    res.json({
-      success: true,
-      message: "Order deleted successfully",
-      data: deletedOrder
-    });
+    await orderModel.findByIdAndDelete(orderId);
+    res.json({ success: true, message: "Order deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -379,10 +325,9 @@ const removeOrder = async (req, res) => {
 const updateStatus = async (req, res) => {
     try {
         await orderModel.findByIdAndUpdate(req.body.orderId, { status: req.body.status });
-        res.json({ success: true, message: "Trạng thái đã được cập nhật" });
+        res.json({ success: true, message: "Status Updated" });
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: "Lỗi" });
+        res.json({ success: false, message: error.message });
     }
 };
 
