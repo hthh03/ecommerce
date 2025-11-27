@@ -1,6 +1,5 @@
 import subCategoryModel from '../models/subCategoryModel.js';
 
-// Add sub-category
 const addSubCategory = async (req, res) => {
     const { name } = req.body;
     if (!name) {
@@ -20,7 +19,6 @@ const addSubCategory = async (req, res) => {
     }
 };
 
-// List all sub-categories
 const listSubCategories = async (req, res) => {
     try {
         const subCategories = await subCategoryModel.find({}).sort({ name: 1 });
@@ -31,7 +29,6 @@ const listSubCategories = async (req, res) => {
     }
 };
 
-// Remove sub-category
 const removeSubCategory = async (req, res) => {
     const { id } = req.body;
     try {

@@ -19,14 +19,11 @@ const ShopContextProvider = (props) => {
   const [showFilter, setShowFilter] = useState(true);
   const [token, setToken] = useState("");
   const navigate = useNavigate();
-
-  // Load cart từ localStorage ban đầu
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = localStorage.getItem("cartItems");
     return savedCart ? JSON.parse(savedCart) : {};
   });
 
-  // Lưu giỏ hàng xuống localStorage mỗi khi thay đổi
   useEffect(() => {
     localStorage.setItem("cartItems", JSON.stringify(cartItems));
   }, [cartItems]);
@@ -44,10 +41,9 @@ const ShopContextProvider = (props) => {
 
     useEffect(() => {
         getProductsData();
-        getSubCategoryData(); // Gọi hàm fetch
+        getSubCategoryData(); 
     }, []);
 
-  // Fetch products từ backend
   const getProductsData = async () => {
     try {
       const response = await axios.get(backendUrl + "/api/product/list");
@@ -62,7 +58,6 @@ const ShopContextProvider = (props) => {
     }
   };
 
-  // Đồng bộ giỏ hàng từ backend
   const getUserCart = async (tk) => {
     try {
       const response = await axios.post(
@@ -90,8 +85,6 @@ const ShopContextProvider = (props) => {
       getUserCart(tk);
     }
   }, []);
-
-  // ====== Cart Logic ======
 
   const addToCart = async (itemId, size) => {
     let cartData = structuredClone(cartItems);

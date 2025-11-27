@@ -20,20 +20,16 @@ const Add = ({ token }) => {
   const [bestseller, setBestseller] = useState(false)
   const [sizes, setSizes] = useState([{ size: '', stock: '' }]);
 
-    // Hàm xử lý thay đổi trong các ô input của size/stock
     const handleSizeChange = (index, event) => {
         const values = [...sizes];
         values[index][event.target.name] = event.target.value;
         setSizes(values);
     };
 
-    // Hàm thêm một cặp trường size/stock mới
     const addSizeField = () => {
-        // Sử dụng chuỗi rỗng '' thay vì ' ' để dữ liệu sạch hơn
         setSizes([...sizes, { size: '', stock: '' }]); 
     };
 
-    // Hàm xóa một cặp trường size/stock
     const removeSizeField = (index) => {
         const values = [...sizes];
         values.splice(index, 1);
@@ -86,14 +82,13 @@ const Add = ({ token }) => {
     }
   }
   
-   // Hàm fetch sub-categories
   const fetchSubCategories = async () => {
     try {
       const response = await axios.get(backendUrl + '/api/subcategory/list');
       if (response.data.success) {
         setSubCategoryList(response.data.subCategories);
         if (response.data.subCategories.length > 0) {
-           setSubCategory(response.data.subCategories[0].name); // Set giá trị mặc định
+           setSubCategory(response.data.subCategories[0].name); 
         }
       }
     // eslint-disable-next-line no-unused-vars
@@ -214,7 +209,6 @@ const Add = ({ token }) => {
                             name="size"
                             placeholder="Size (e.g., 16 or 40cm)"
                             value={sizeField.size}
-                            // SỬA LỖI Ở ĐÂY: Gắn hàm vào sự kiện onChange
                             onChange={event => handleSizeChange(index, event)}
                             className="w-full max-w-[240px] px-3 py-2 border rounded"
                             required
@@ -224,19 +218,16 @@ const Add = ({ token }) => {
                             name="stock"
                             placeholder="Stock quantity"
                             value={sizeField.stock}
-                            // SỬA LỖI Ở ĐÂY: Gắn hàm vào sự kiện onChange
                             onChange={event => handleSizeChange(index, event)}
                             className="w-full max-w-[240px] px-3 py-2 border rounded"
                             required
                             min="0"
                         />
-                        {/* SỬA LỖI Ở ĐÂY: Gắn hàm vào sự kiện onClick */}
                         <button type="button" onClick={() => removeSizeField(index)} className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">
                             -
                         </button>
                     </div>
                 ))}
-                {/* SỬA LỖI Ở ĐÂY: Gắn hàm vào sự kiện onClick */}
                 <button type="button" onClick={addSizeField} className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
                     + Add Size
                 </button>

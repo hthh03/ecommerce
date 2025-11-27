@@ -7,17 +7,13 @@ const LastestCollection = () => {
     
   const { products } = useContext(ShopContext);
   const [latestProducts, setLatestProducts] = useState([]);
-  const [category, setCategory] = useState('All'); // State để lưu danh mục đang chọn
+  const [category, setCategory] = useState('All'); 
 
   useEffect(() => {
     let filtered = products.slice();
-
-    // Lọc theo danh mục nếu không phải là 'All'
     if (category !== 'All') {
         filtered = filtered.filter(item => item.category === category);
     }
-
-    // Lấy 10 sản phẩm mới nhất của danh mục đó
     setLatestProducts(filtered.slice(0, 10));
   }, [products, category]);
 
@@ -28,8 +24,6 @@ const LastestCollection = () => {
         <p className='w-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600'>
           Discover the newest arrivals from <b>Flora Gems</b>. Each piece is crafted to bring timeless elegance.
         </p>
-        
-        {/* --- CÁC NÚT LỌC DANH MỤC --- */}
         <div className='flex justify-center gap-4 mt-6'>
             {['All', 'Men', 'Women', 'Kids'].map((cat) => (
                 <button 
@@ -43,8 +37,7 @@ const LastestCollection = () => {
             ))}
         </div>
       </div>
-
-      {/* Rendering Products */}
+      
      <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6'>
         {latestProducts.length > 0 ? (
             latestProducts.map((item, index) => (

@@ -11,8 +11,7 @@ const Orders = ({ token }) => {
   const [cancelReason, setCancelReason] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 1. THÊM STATE CHO LOGIC TỒN KHO
-  const [stockAction, setStockAction] = useState("refund"); // 'refund', 'setZero', 'noChange'
+  const [stockAction, setStockAction] = useState("refund"); 
 
   const fetchAllOrders = async () => {
     if (!token) return;
@@ -66,7 +65,6 @@ const Orders = ({ token }) => {
     }
   };
   
-  // 2. CẬP NHẬT HÀM HỦY ĐƠN
   const handleCancelOrder = async () => {
     if (!selectedOrder || !cancelReason.trim()) {
       toast.error("Please provide a cancellation reason");
@@ -80,7 +78,7 @@ const Orders = ({ token }) => {
         { 
           orderId: selectedOrder._id, 
           reason: cancelReason,
-          stockAction: stockAction // Gửi kèm hành động tồn kho
+          stockAction: stockAction 
         },
         { headers: { token } }
       );
@@ -129,8 +127,8 @@ const Orders = ({ token }) => {
   const openCancelModal = (order) => {
     setSelectedOrder(order);
     setShowCancelModal(true);
-    setCancelReason(""); // Reset lý do
-    setStockAction("refund"); // Reset tồn kho về mặc định
+    setCancelReason(""); 
+    setStockAction("refund"); 
   };
 
   const closeCancelModal = () => {
@@ -284,7 +282,6 @@ const Orders = ({ token }) => {
         <p className="text-gray-500 text-center mt-10">No orders available.</p>
       )}
 
-      {/* 3. CẬP NHẬT MODAL VỚI LOGIC TỒN KHO */}
       {showCancelModal && (
         <div className="modal-overlay">
           <div className="modal-container">
@@ -318,7 +315,6 @@ const Orders = ({ token }) => {
                 </div>
               )}
 
-              {/* Lý do hủy */}
               <div className="mb-4">
                 <label className="form-label required">
                   Cancellation Reason:
@@ -332,7 +328,6 @@ const Orders = ({ token }) => {
                 />
               </div>
 
-              {/* Lựa chọn tồn kho */}
               <div>
                 <label className="form-label">
                   Stock Management

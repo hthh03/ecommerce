@@ -23,10 +23,7 @@ const Verify = () => {
             );
 
             if (response.data.success) {
-                // 2. XÓA GIỎ HÀNG TRÊN FRONTEND NGAY LẬP TỨC
                 setCartItems({}); 
-                
-                // Cập nhật lại tồn kho mới nhất
                 await getProductsData();
 
                 toast.success("Payment Successful!");

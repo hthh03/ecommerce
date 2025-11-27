@@ -18,8 +18,6 @@ const NavBar = () => {
 
   return (
     <div className='flex items-center justify-between py-5 font-medium'>
-      
-      {/* --- SỬA LỖI: Logo responsive (nhỏ trên mobile, lớn trên desktop) --- */}
       <Link to='/'> 
         <img src={assets.logo} className='w-36 sm:w-60 cursor-pointer' alt='Flora Gems'/> 
       </Link>
@@ -43,19 +41,17 @@ const NavBar = () => {
         </NavLink>
       </ul>
 
-      {/* --- SỬA LỖI: Giảm khoảng cách (gap) trên mobile --- */}
       <div className='flex items-center gap-3 sm:gap-6'>
         <img onClick={()=>setShowSearch(true)} src={assets.search_icon} className='w-5 cursor-pointer' alt='search'/>
         
         <div className='group relative'>
             <img 
                 onClick={()=> token ? null : navigate('/login')} 
-                className='w-5 h-auto cursor-pointer' // Giữ nguyên kích thước icon
+                className='w-5 h-auto cursor-pointer' 
                 src={assets.profile_icon} 
                 alt="profile"
             />
 
-            {/* Dropdown Menu */}
             {token && 
             <div className='group-hover:block hidden absolute dropdown-menu right-0 pt-4 z-50'>
                 <div className='flex flex-col gap-2 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded shadow-lg'>
@@ -76,7 +72,6 @@ const NavBar = () => {
         <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-5 cursor-pointer sm:hidden' alt='menu'/>
       </div>
 
-      {/* Sidebar menu for small screens*/}
       <div className={`absolute top-0 right-0 bottom-0 overflow-hidden bg-white transition-all ${visible ? 'w-full' : 'w-0'} z-50`}>
           <div className='flex flex-col text-gray-600'>
             <div onClick={()=>setVisible(false)} className='flex items-center gap-4 p-3'>

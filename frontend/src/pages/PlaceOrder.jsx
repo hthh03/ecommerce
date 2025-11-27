@@ -135,7 +135,6 @@ const PlaceOrder = () => {
     }
   };
 
-  // Styles chung cho input
   const inputStyle = "w-full border border-gray-300 rounded-md px-4 py-2.5 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors bg-white";
 
   return (
@@ -143,7 +142,6 @@ const PlaceOrder = () => {
       
       <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
         
-        {/* --- LEFT SIDE: DELIVERY FORM --- */}
         <div className="flex-1 flex flex-col gap-6">
           <div className="text-2xl font-medium">
             <Title text1={'DELIVERY'} text2={'INFORMATION'} />
@@ -191,7 +189,6 @@ const PlaceOrder = () => {
                   <img className="h-6" src={assets.stripe_logo} alt="Stripe" />
                 </div>
 
-                {/* COD Option */}
                 <div 
                   onClick={() => setMethod('cod')} 
                   className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all duration-200 ${method === 'cod' ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'border-gray-200 hover:bg-white'}`}
@@ -206,7 +203,6 @@ const PlaceOrder = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <button 
                 type="submit" 
                 className="w-full bg-black text-white mt-8 py-4 rounded-lg font-semibold text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors shadow-md"

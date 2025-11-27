@@ -3,30 +3,25 @@ import userModel from "../models/userModel.js";
 import productModel from "../models/productModel.js"; 
 import Stripe from 'stripe';
 
-// global variables
 const currency = 'usd';
 const deliveryCharge = 10;
 
-// gateway initialize 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Helper: Hàm trừ kho an toàn (Ép kiểu số)
 const deductStock = async (productId, size, quantity) => {
     await productModel.updateOne(
         { _id: productId, 'sizes.size': size },
-        { $inc: { 'sizes.$.stock': -Number(quantity) } } // Ép về số để trừ chính xác
+        { $inc: { 'sizes.$.stock': -Number(quantity) } } 
     );
 };
 
-// Helper: Hàm cộng kho an toàn
 const restockItem = async (productId, size, quantity) => {
     await productModel.updateOne(
         { _id: productId, 'sizes.size': size },
-        { $inc: { 'sizes.$.stock': Number(quantity) } } // Ép về số để cộng chính xác
+        { $inc: { 'sizes.$.stock': Number(quantity) } } 
     );
 };
 
-// Place order using COD
 const placeOrder = async (req, res) => {
     try {
         const userId = req.userId;   
@@ -34,7 +29,6 @@ const placeOrder = async (req, res) => {
 
         if (!userId) return res.json({ success: false, message: "User ID missing. Login again." });
 
-        // --- VALIDATION TỒN KHO ---
         for (const item of items) {
             const product = await productModel.findById(item.productId);
             if (!product) return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
@@ -47,7 +41,6 @@ const placeOrder = async (req, res) => {
             }
         }
         
-        // --- TRỪ KHO ---
         for (const item of items) {
             await deductStock(item.productId, item.size, item.quantity);
         }
@@ -72,19 +65,14 @@ const placeOrder = async (req, res) => {
     }
 };
 
-// Place order using Stripe
 const placeOrderStripe = async (req, res) => {
     try {
         const userId = req.userId;
         const { items, amount, address } = req.body;
         const { origin } = req.headers;
-
-        // BẢO VỆ: Kiểm tra userId để tránh sập server
         if (!userId) {
             return res.json({ success: false, message: "Not Authorized. Please login again." });
         }
-
-        // --- VALIDATION ---
         for (const item of items) {
             const product = await productModel.findById(item.productId);
             if (!product) return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
@@ -96,8 +84,6 @@ const placeOrderStripe = async (req, res) => {
                 return res.status(400).json({ success: false, message: `Stock error: ${item.name}` });
             }
         }
-        
-        // --- TRỪ KHO ---
         for (const item of items) {
             await deductStock(item.productId, item.size, item.quantity);
         }
@@ -149,7 +135,6 @@ const placeOrderStripe = async (req, res) => {
     }
 };
 
-// Verify Stripe
 const verifyStripe = async (req, res) => {
     const { orderId, success } = req.body;
     try {
@@ -161,7 +146,6 @@ const verifyStripe = async (req, res) => {
             }
             res.json({ success: true }); 
         } else {
-            // THANH TOÁN LỖI -> HOÀN LẠI KHO
             const order = await orderModel.findById(orderId);
             if (order) {
                 for (const item of order.items) {
@@ -177,7 +161,6 @@ const verifyStripe = async (req, res) => {
     }
 };
 
-// Cancel Order Function
 const cancelOrder = async (req, res) => {
     try {
         const { orderId, reason, stockAction } = req.body;
@@ -187,7 +170,6 @@ const cancelOrder = async (req, res) => {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        // Logic hoàn kho
         if (!order.cancelled) {
             const action = stockAction || 'refund'; 
 
@@ -204,7 +186,6 @@ const cancelOrder = async (req, res) => {
         }
 
         let refundResult = null;
-        // Logic Stripe Refund
         if (order.paymentMethod === 'Stripe' && order.payment) {
             try {
                 const sessions = await stripe.checkout.sessions.list({ limit: 100 });
@@ -226,7 +207,6 @@ const cancelOrder = async (req, res) => {
                 }
             } catch (stripeError) {
                 console.error('Stripe Refund Error:', stripeError);
-                // Không return lỗi ở đây để vẫn cho phép hủy đơn trong DB
             }
         }
 
@@ -234,7 +214,7 @@ const cancelOrder = async (req, res) => {
             status: 'Cancelled',
             cancelled: true,
             cancelledAt: new Date(),
-            cancelReason: reason // Lưu lý do
+            cancelReason: reason 
         };
 
         if (refundResult) {
@@ -255,7 +235,6 @@ const cancelOrder = async (req, res) => {
     }
 };
 
-// Check Refund Status
 const checkRefundStatus = async (req, res) => {
     try {
         const { orderId } = req.body;
@@ -290,7 +269,6 @@ const checkRefundStatus = async (req, res) => {
     }
 };
 
-// All orders for Admin
 const allOrders = async (req, res) => {
     try {
         const orders = await orderModel.find({});
@@ -300,7 +278,6 @@ const allOrders = async (req, res) => {
     }
 };
 
-// Orders of logged-in user
 const userOrders = async (req, res) => {
     try {
         const userId = req.userId; 
@@ -321,7 +298,6 @@ const removeOrder = async (req, res) => {
   }
 };
 
-// Update order status (Admin only)
 const updateStatus = async (req, res) => {
     try {
         await orderModel.findByIdAndUpdate(req.body.orderId, { status: req.body.status });

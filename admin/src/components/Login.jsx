@@ -2,12 +2,12 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import { backendUrl } from '../App'
 import { toast } from 'react-toastify'
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi' // Import icons
+import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 
 const Login = ({ setToken }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false) // State để bật/tắt mật khẩu
+  const [showPassword, setShowPassword] = useState(false) 
   const [isLoading, setIsLoading] = useState(false)
 
   const onSubmitHandler = async (e) => {
@@ -83,12 +83,11 @@ const Login = ({ setToken }) => {
                   id='password'
                   onChange={(e) => setPassword(e.target.value)}
                   value={password}
-                  type={showPassword ? 'text' : 'password'} // Logic bật tắt type
+                  type={showPassword ? 'text' : 'password'} 
                   required
                   className='focus:ring-black focus:border-black block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 transition-all'
                   placeholder='••••••••'
                 />
-                {/* Nút Bật/Tắt Mật khẩu */}
                 <div className='absolute inset-y-0 right-0 pr-3 flex items-center'>
                   <button
                     type='button'
@@ -105,7 +104,6 @@ const Login = ({ setToken }) => {
               </div>
             </div>
 
-            {/* Submit Button */}
             <div>
               <button
                 type='submit'

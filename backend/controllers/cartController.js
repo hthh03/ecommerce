@@ -1,6 +1,5 @@
 import userModel from "../models/userModel.js"
 
-// add products to user cart 
 const addToCart = async (req,res) => {
     try {
         const { itemId, size } = req.body;
@@ -33,7 +32,6 @@ const addToCart = async (req,res) => {
 };
 
 
-// update user cart 
 const updateCart = async (req,res) => {
     try {
         const { itemId, size, quantity } = req.body;
@@ -56,10 +54,9 @@ const updateCart = async (req,res) => {
     }
 };
 
-// get user cart data
 const getUserCart = async (req,res) => {
     try {
-        const userId = req.userId;  // lấy từ auth middleware
+        const userId = req.userId; 
 
         const userData = await userModel.findById(userId);
         if (!userData) {

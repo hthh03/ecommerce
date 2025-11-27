@@ -2,7 +2,7 @@ import userModel from "../models/userModel.js"
 
 export const checkBlocked = async (req, res, next) => {
     try {
-        const { email } = req.body   // lấy email từ login request
+        const { email } = req.body   
         const user = await userModel.findOne({ email })
 
         if (!user) {
@@ -13,7 +13,7 @@ export const checkBlocked = async (req, res, next) => {
             return res.status(403).json({ success: false, message: "Your account has been blocked. Please contact admin." })
         }
 
-        next() // cho phép đi tiếp nếu chưa bị block
+        next()
     } catch (error) {
         console.error(error)
         res.status(500).json({ success: false, message: "Server error" })

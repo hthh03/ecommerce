@@ -19,12 +19,9 @@ const Collection = () => {
     const [filterProducts, setFilterProducts] = useState([]);
     const [sortType, setSortType] = useState('relevant');
     const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
-
-    // --- NEW: State for Pagination ---
     const [currentPage, setCurrentPage] = useState(1);
-    const [productsPerPage] = useState(8); // You can change this number
+    const [productsPerPage] = useState(8); 
 
-    // --- LOGIC REMAINS MOSTLY UNCHANGED ---
     const handleToggleCategory = (value) => {
         if (category.includes(value)) {
             setCategory(prev => prev.filter(c => c !== value));
@@ -75,9 +72,8 @@ const Collection = () => {
         }
     }
     
-    // --- UPDATED: Reset to page 1 when filters change ---
     useEffect(() => {
-        setCurrentPage(1); // Reset page on any filter change
+        setCurrentPage(1); 
         applyFilter();
     }, [category, subCategory, search, showSearch, products]);
 
@@ -85,7 +81,6 @@ const Collection = () => {
         sortProduct();
     }, [sortType]);
 
-    // --- NEW: Pagination Logic ---
     const indexOfLastProduct = currentPage * productsPerPage;
     const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
     const currentProducts = filterProducts.slice(indexOfFirstProduct, indexOfLastProduct);
@@ -96,15 +91,11 @@ const Collection = () => {
     }
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
-    // --- End of Pagination Logic ---
 
     return (
         <div className='flex flex-col gap-8 pt-10 border-t'>
-
-            {/* Filter Panel (Centered) */}
             <div className="w-full flex justify-center px-4">
                 <div className='w-full max-w-5xl p-4 border rounded-lg bg-gray-50 flex flex-col gap-4'>
-                    {/* ... filter JSX remains the same ... */}
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="font-semibold text-lg">Filters</h3>
                         <button onClick={clearFilters} className="text-sm text-blue-600 hover:underline">Clear all filters</button>
@@ -143,7 +134,6 @@ const Collection = () => {
                 </div>
             </div>
             
-            {/* Product Grid */}
             <div className='flex-1 px-4'>
                 <div className='flex justify-between text-base sm:text-2xl mb-4'>
                     <Title text1={'ALL'} text2={'COLLECTIONS'}/>
@@ -153,14 +143,13 @@ const Collection = () => {
                         <option value="high-low">Sort by: Price High to Low</option>
                     </select>
                 </div>
-                {/* --- UPDATED: Render currentProducts instead of all filtered products --- */}
                 <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6'>
                     {currentProducts.length > 0 ? (
                         currentProducts.map((item) => (
                             <ProductItem 
                                 key={item._id} 
                                 id={item._id} 
-                                image={item.image[0]} // Passing the first image
+                                image={item.image[0]} 
                                 name={item.name} 
                                 price={item.price} 
                             />
@@ -171,7 +160,6 @@ const Collection = () => {
                 </div>
             </div>
 
-            {/* --- NEW: Pagination UI --- */}
             {filterProducts.length > productsPerPage && (
                 <div className="flex justify-center items-center gap-2 mt-10 mb-5">
                     {pageNumbers.map(number => (

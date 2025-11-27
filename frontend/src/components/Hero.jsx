@@ -3,14 +3,9 @@ import Slider from 'react-slick';
 import { assets } from '../assets/assets';
 import { useNavigate } from 'react-router-dom';
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
-
-// --- 1. IMPORT CSS CỦA THƯ VIỆN TRỰC TIẾP TẠI ĐÂY ---
-// Lưu ý: Bạn vẫn cần đảm bảo đã chạy "npm install slick-carousel"
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
 
-// --- 2. CSS TÙY CHỈNH (Lồng vào component) ---
-// Đoạn này chỉnh sửa mũi tên và các dấu chấm tròn
 const customStyles = `
   .slick-prev, .slick-next {
     z-index: 20;
@@ -34,7 +29,6 @@ const customStyles = `
   }
 `;
 
-// Component Mũi tên Phải
 function SampleNextArrow(props) {
   const { className, onClick } = props;
   return (
@@ -57,7 +51,6 @@ function SampleNextArrow(props) {
   );
 }
 
-// Component Mũi tên Trái
 function SamplePrevArrow(props) {
   const { className, onClick } = props;
   return (
@@ -91,14 +84,13 @@ const Hero = () => {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 4000,
-    fade: true, // Hiệu ứng mờ dần giúp ảnh không bị giật layout
+    fade: true, 
     cssEase: "ease-in-out",
     nextArrow: <SampleNextArrow />,
     prevArrow: <SamplePrevArrow />,
     pauseOnHover: false,
   };
 
-  // Fallback nếu không có banner
   if (!assets.banners || assets.banners.length === 0) {
     return (
       <div className='flex flex-col sm:flex-row border border-gray-400'>
@@ -122,15 +114,12 @@ const Hero = () => {
 
   return (
     <div className='relative w-full overflow-hidden border border-gray-400'>
-      {/* Chèn CSS Style trực tiếp vào đây */}
       <style>{customStyles}</style>
 
       <Slider {...settings}>
         {assets.banners.map((banner, index) => (
           <div key={index} className="outline-none">
             <div className="flex flex-col sm:flex-row w-full">
-              
-              {/* Phần Chữ (Bên trái) */}
               <div className="w-full sm:w-1/2 flex items-center justify-center py-10 sm:py-0 bg-[#fbfbfb]">
                 <div className='text-[#414141] text-center sm:text-left px-6'>
                     <div className='flex items-center justify-center sm:justify-start gap-2'>
@@ -151,10 +140,7 @@ const Hero = () => {
                     </div>
                  </div>
               </div>
-
-              {/* Phần Ảnh (Bên phải) */}
               <div className="w-full sm:w-1/2 h-[300px] sm:h-[450px] relative">
-                 {/* Dùng object-cover để ảnh lấp đầy khung mà không bị méo */}
                 <img 
                     className='w-full h-full object-cover absolute top-0 left-0' 
                     src={banner.image} 

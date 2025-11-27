@@ -6,25 +6,18 @@ import { toast } from 'react-toastify';
 
 const Orders = () => {
   const { backendUrl, token, currency, getOrderTotal, delivery_fee, getProductsData } = useContext(ShopContext);
-  
-  // --- State cho Đơn hàng ---
   const [orders, setOrders] = useState([]);
   const [expandedOrderId, setExpandedOrderId] = useState(null); 
   const [loading, setLoading] = useState(false);
-
-  // --- State cho Hủy Đơn ---
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
-
-  // --- State cho Bình luận (Review/Comment) ---
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewProduct, setReviewProduct] = useState(null); 
   const [reviewComment, setReviewComment] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // Xác định là Viết mới hay Sửa
+  const [isEditMode, setIsEditMode] = useState(false); 
 
-  // Tải danh sách đơn hàng
   const loadOrderData = async () => {
     try {
       if (!token) return;
@@ -46,7 +39,6 @@ const Orders = () => {
       setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
-  // --- HÀM XỬ LÝ HỦY ĐƠN ---
   const handleCancelOrder = async () => {
     if (!selectedOrder || !cancelReason.trim()) {
       toast.error("Please provide a cancellation reason");
@@ -72,13 +64,12 @@ const Orders = () => {
           });
         }
         
-        // 2. GỌI HÀM NÀY ĐỂ CẬP NHẬT LẠI SỐ LƯỢNG TỒN KHO TỨC THÌ
         await getProductsData(); 
 
         setShowCancelModal(false);
         setCancelReason("");
         setSelectedOrder(null);
-        loadOrderData(); // Tải lại danh sách đơn hàng
+        loadOrderData(); 
       } else {
         toast.error(response.data.message);
       }
@@ -89,14 +80,11 @@ const Orders = () => {
     }
   };
 
-  // --- HÀM MỞ MODAL BÌNH LUẬN (KIỂM TRA REVIEW CŨ) ---
   const openReviewModal = async (product, orderId) => {
     setReviewProduct({ ...product, orderId });
-    setReviewLoading(true); // Hiển thị loading khi đang check
+    setReviewLoading(true); 
 
     try {
-        // Gọi API kiểm tra xem user đã review sản phẩm này trong đơn này chưa
-        // (Bạn cần đảm bảo backend đã có route /api/review/user-review như hướng dẫn trước)
         const response = await axios.post(
             backendUrl + "/api/review/user-review",
             { productId: product.productId, orderId: orderId },
@@ -104,11 +92,9 @@ const Orders = () => {
         );
 
         if (response.data.success) {
-            // Đã có review -> Chế độ EDIT
             setIsEditMode(true);
-            setReviewComment(response.data.review.comment); // Điền sẵn comment cũ
+            setReviewComment(response.data.review.comment); 
         } else {
-            // Chưa có review -> Chế độ ADD
             setIsEditMode(false);
             setReviewComment("");
         }
@@ -116,7 +102,6 @@ const Orders = () => {
 
     } catch (error) {
         console.error(error);
-        // Nếu lỗi (ví dụ 404 not found), mặc định là Add mới
         setIsEditMode(false);
         setReviewComment("");
         setShowReviewModal(true);
@@ -125,7 +110,6 @@ const Orders = () => {
     }
   };
 
-  // --- HÀM GỬI BÌNH LUẬN (ADD HOẶC EDIT) ---
   const handleReviewSubmit = async () => {
     if (!reviewComment.trim()) {
       toast.error("Please provide a comment");
@@ -134,7 +118,6 @@ const Orders = () => {
     setReviewLoading(true);
     
     try {
-      // Xác định API endpoint dựa trên chế độ
       const endpoint = isEditMode ? "/api/review/edit" : "/api/review/add";
       
       const response = await axios.post(
@@ -159,8 +142,7 @@ const Orders = () => {
       setReviewLoading(false);
     }
   };
-
-  // Các hàm helper nhỏ
+  
   const closeReviewModal = () => {
     setShowReviewModal(false);
     setReviewProduct(null);
@@ -196,12 +178,10 @@ const Orders = () => {
       </div>
 
       <div className="mt-6">
-        {/* KIỂM TRA: Nếu có đơn hàng thì map, không có thì hiện thông báo */}
         {orders.length > 0 ? (
           orders.map((order) => (
             <div key={order._id} className="border rounded-xl shadow-sm p-6 mb-6 bg-white hover:shadow-md transition">
               
-              {/* --- HEADER ĐƠN HÀNG --- */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -211,7 +191,6 @@ const Orders = () => {
                      <p className="text-sm text-gray-500">Date: {new Date(order.date).toDateString()}</p>
                      <p className="text-sm text-gray-500">Payment: {order.paymentMethod}</p>
                   </div>
-                  {/* Hiển thị lý do hủy */}
                   {order.cancelled && (
                     <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
                       <p className="text-red-800 text-sm font-medium">❌ CANCELLED</p>
@@ -232,7 +211,6 @@ const Orders = () => {
                      <button onClick={() => toggleExpand(order._id)} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-100">
                         {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
                      </button>
-                     {/* Nút Hủy chỉ hiện khi chưa giao hàng */}
                      {!order.cancelled && ['Order Placed', 'Packing'].includes(order.status) && (
                         <button onClick={() => openCancelModal(order)} className="px-4 py-2 text-sm bg-yellow-500 text-white rounded-md">Cancel</button>
                      )}
@@ -243,7 +221,6 @@ const Orders = () => {
                 </div>
               </div>
 
-              {/* --- CHI TIẾT SẢN PHẨM (MỞ RỘNG) --- */}
               {expandedOrderId === order._id && (
                 <div className="space-y-4">
                   <h4 className="font-semibold text-gray-800 border-b pb-2">Order Items</h4>
@@ -255,8 +232,6 @@ const Orders = () => {
                         <p className="text-sm text-gray-500">Size: {item.size} | Qty: {item.quantity}</p>
                         <p className="text-sm text-gray-600">{currency}{item.price}</p>
                       </div>
-
-                      {/* NÚT COMMENT / EDIT - Chỉ hiện khi đã giao hàng */}
                       {order.status === 'Delivered' && (
                         <button
                           onClick={() => openReviewModal(item, order._id)}
@@ -268,7 +243,6 @@ const Orders = () => {
                     </div>
                   ))}
                   
-                  {/* Địa chỉ giao hàng */}
                   <div className="border-t pt-4">
                      <p className="text-sm text-gray-600 font-medium">Delivery Address:</p>
                      <p className="text-sm text-gray-500">
@@ -280,7 +254,6 @@ const Orders = () => {
             </div>
           ))
         ) : (
-          // --- GIAO DIỆN KHI CHƯA CÓ ĐƠN HÀNG ---
           <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <p className="text-4xl grayscale">📦</p> 
@@ -299,7 +272,6 @@ const Orders = () => {
         )}
       </div>
 
-      {/* --- MODAL HỦY ĐƠN --- */}
       {showCancelModal && (
          <div className="modal-overlay">
             <div className="modal-container">
@@ -324,7 +296,6 @@ const Orders = () => {
          </div>
       )}
 
-      {/* --- MODAL BÌNH LUẬN (COMMENT ONLY) --- */}
       {showReviewModal && (
         <div className="modal-overlay">
           <div className="modal-container">
@@ -335,7 +306,6 @@ const Orders = () => {
             </div>
             
             <div className="modal-body">
-              {/* Thông tin sản phẩm */}
               <div className="flex items-center gap-4 mb-4 bg-gray-50 p-3 rounded-lg">
                 <img src={reviewProduct.image} alt={reviewProduct.name} className="w-12 h-12 rounded object-cover" />
                 <div>
@@ -344,7 +314,6 @@ const Orders = () => {
                 </div>
               </div>
 
-              {/* Ô nhập bình luận */}
               <div className="mt-2">
                 <label className="form-label required">Your Experience:</label>
                 <textarea

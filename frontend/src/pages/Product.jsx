@@ -3,12 +3,10 @@ import { useParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import RelatedProducts from '../components/RelatedProducts'
 import axios from 'axios';
-// 1. IMPORT TOAST ĐỂ THÔNG BÁO
 import { toast } from 'react-toastify';
 
 const Product = () => {
   const {productId} = useParams();
-  // 2. LẤY THÊM 'cartItems' TỪ CONTEXT
   const {products, currency, addToCart, backendUrl, cartItems } = useContext(ShopContext);
   const [productData, setProductData] = useState(false); 
   const [image, setImage] = useState('');
@@ -51,23 +49,17 @@ const Product = () => {
     }
   };
 
-  // --- 3. HÀM XỬ LÝ ADD TO CART MỚI ---
   const handleAddToCart = () => {
     if (!size) {
       toast.error("Please select a size");
       return;
     }
-
-    // Kiểm tra số lượng hiện có trong giỏ hàng
     const currentQtyInCart = cartItems[productData._id]?.[size] || 0;
 
-    // So sánh với tồn kho thực tế
     if (currentQtyInCart >= selectedSizeStock) {
         toast.error(`Sorry, only ${selectedSizeStock} items available in stock!`);
         return;
     }
-
-    // Nếu hợp lệ thì gọi hàm gốc
     addToCart(productData._id, size);
   };
 
@@ -84,7 +76,6 @@ const Product = () => {
   return productData ? (
     <div className='border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100'>
       <div className='flex gap-12 sm:gap-12 flex-col sm:flex-row'>
-        {/* Phần hình ảnh sản phẩm */}
         <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
           <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
             {
@@ -108,7 +99,6 @@ const Product = () => {
         <div className='flex-1'>
           <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
           
-          {/* Hiển thị số lượng đánh giá */}
           <div className='flex items-center gap-2 mt-2'>
             {productData.numReviews > 0 ? (
               <p className='text-sm text-gray-600'>({productData.numReviews} reviews)</p>
@@ -120,7 +110,6 @@ const Product = () => {
           <p className='mt-5 text-3xl font-medium'>{currency}{productData.price}</p>
           <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description} </p>
 
-          {/* Phần chọn Size */}
           <div className='flex flex-col gap-4 my-8'>
             <div className='flex items-center justify-between'>
               <p>Select Size</p>
@@ -146,7 +135,6 @@ const Product = () => {
             )}
           </div>
 
-          {/* 4. SỬ DỤNG HÀM MỚI Ở NÚT ADD TO CART */}
           <button 
             onClick={handleAddToCart}
             className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed mt-4'

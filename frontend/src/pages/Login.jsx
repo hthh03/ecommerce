@@ -15,7 +15,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // --- Handle Standard Login (Email/Password) ---
   const onSubmitHandler = async (event) => {
     event.preventDefault();
     setIsLoading(true);
@@ -44,7 +43,6 @@ const Login = () => {
     }
   };
 
-  // --- Handle Google Login ---
   const handleGoogleSuccess = async (credentialResponse) => {
     setIsLoading(true);
     try {
@@ -75,13 +73,11 @@ const Login = () => {
   return (
     <div className="flex flex-col items-center w-[90%] sm:max-w-96 m-auto mt-14 gap-4 text-gray-800 mb-20">
       
-      {/* HEADER: Login / Sign Up Switch */}
       <div className="inline-flex items-center gap-2 mb-2 mt-10">
         <p className="prata-regular text-3xl">{currentState}</p>
         <hr className="border-none h-[1.5px] w-8 bg-gray-800" />
       </div>
 
-      {/* STANDARD LOGIN FORM */}
       <form onSubmit={onSubmitHandler} className="w-full flex flex-col gap-4">
           
           {currentState === 'Sign Up' && (
@@ -91,8 +87,6 @@ const Login = () => {
 
           <input onChange={(e) => setEmail(e.target.value)} value={email} type="email" placeholder="Email Address"
             className="w-full px-3 py-2 border border-gray-800" required disabled={isLoading} />
-
-          {/* Password Input with Eye Icon */}
           <div className="relative w-full">
             <input
               onChange={(e) => setPassword(e.target.value)} 
@@ -122,7 +116,6 @@ const Login = () => {
             </button>
           </div>
           
-          {/* Forgot Password & Switch Mode Links */}
           <div className="w-full flex justify-between text-sm mt-[-8px]">
             {currentState === 'Login' ? (
               <p onClick={() => navigate('/forgot-password')} className="cursor-pointer hover:text-gray-600">Forgot Your Password?</p>
@@ -143,7 +136,6 @@ const Login = () => {
           </button>
       </form>
 
-      {/* --- GOOGLE LOGIN SECTION --- */}
       <div className="w-full flex flex-col items-center gap-4 mt-2">
           <div className="flex items-center gap-2 w-full">
               <hr className="flex-1 border-gray-300" />
@@ -151,7 +143,6 @@ const Login = () => {
               <hr className="flex-1 border-gray-300" />
           </div>
           
-          {/* Google Button */}
           <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => {

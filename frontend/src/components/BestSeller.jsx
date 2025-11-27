@@ -7,13 +7,9 @@ const BestSeller = () => {
 
     const { products } = useContext(ShopContext);
     const [bestSeller, setBestSeller] = useState([]);
-    const [category, setCategory] = useState('All'); // State lọc danh mục
-
+    const [category, setCategory] = useState('All'); 
     useEffect(() => {
-        // Lọc tất cả sản phẩm có flag 'bestseller' trước
         let bestProducts = products.filter((item) => item.bestseller);
-
-        // Sau đó lọc theo category nếu được chọn
         if (category !== 'All') {
             bestProducts = bestProducts.filter(item => item.category === category);
         }
@@ -28,8 +24,6 @@ const BestSeller = () => {
             <p className="w-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600">
             Our bestsellers are handpicked pieces that combine artistry, sparkle, and timeless design.
             </p>
-
-            {/* --- CÁC NÚT LỌC DANH MỤC --- */}
             <div className='flex justify-center gap-4 mt-6'>
                 {['All', 'Men', 'Women', 'Kids'].map((cat) => (
                     <button 

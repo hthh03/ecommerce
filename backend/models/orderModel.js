@@ -9,16 +9,13 @@ const orderSchema = new mongoose.Schema({
     paymentMethod: {type: String, required: true},
     payment: {type: Boolean, required: true, default: false},
     date: {type: Number, required: true},
-    
-    // 🔹 NEW: Cancel related fields
     cancelled: {type: Boolean, default: false},
     cancelledAt: {type: Date},
-    cancelReason: {type: String}, // <-- Trường để lưu lý do
+    cancelReason: {type: String},
     
-    // 🔹 NEW: Refund related fields
     refund: {
         refundId: {type: String},
-        status: {type: String}, // pending, succeeded, failed, canceled
+        status: {type: String}, 
         amount: {type: Number},
         currency: {type: String},
         createdAt: {type: Date, default: Date.now}

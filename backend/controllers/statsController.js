@@ -2,33 +2,19 @@ import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import mongoose from 'mongoose';
 
-/**
- * @route   GET /api/stats/summary
- * @desc    Lấy dữ liệu tóm tắt (Tổng doanh thu, Tổng đơn hàng, Tổng người dùng)
- * @access  Private (Admin)
- */
 export const getSummary = async (req, res) => {
     try {
-        // 1. Lấy tổng số người dùng
         const totalUsersPromise = userModel.countDocuments();
-
-        // 2. Lấy tổng số đơn hàng đã thanh toán
         const totalOrdersPromise = orderModel.countDocuments({ payment: true });
-
-        // 3. Tính tổng doanh thu từ các đơn hàng đã thanh toán
         const totalRevenuePromise = orderModel.aggregate([
             { $match: { payment: true } },
             { $group: { _id: null, totalRevenue: { $sum: "$amount" } } }
         ]);
-
-        // Chạy song song 3 truy vấn
         const [userCount, orderCount, revenueResult] = await Promise.all([
             totalUsersPromise,
             totalOrdersPromise,
             totalRevenuePromise
         ]);
-
-        // Lấy kết quả doanh thu, mặc định là 0 nếu không có đơn hàng
         const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
 
         res.json({
@@ -44,28 +30,20 @@ export const getSummary = async (req, res) => {
     }
 };
 
-/**
- * @route   GET /api/stats/top-product
- * @desc    Lấy sản phẩm bán chạy nhất
- * @access  Private (Admin)
- */
 export const getTopProduct = async (req, res) => {
     try {
         const topProductAgg = await orderModel.aggregate([
-            { $match: { payment: true } }, // Chỉ tính các đơn hàng đã thanh toán
-            { $unwind: "$items" }, // Tách các sản phẩm trong mảng 'items' ra
+            { $match: { payment: true } }, 
+            { $unwind: "$items" }, 
             {
                 $group: {
-                    // Gom nhóm dựa trên productId.
-                    // Chúng ta cần chuyển đổi productId (String) thành ObjectId để $lookup
                     _id: { $toObjectId: "$items.productId" }, 
-                    totalQuantity: { $sum: "$items.quantity" } // Tính tổng số lượng bán ra
+                    totalQuantity: { $sum: "$items.quantity" } 
                 }
             },
-            { $sort: { totalQuantity: -1 } }, // Sắp xếp giảm dần
-            { $limit: 1 }, // Lấy 1 sản phẩm đầu tiên
+            { $sort: { totalQuantity: -1 } }, 
+            { $limit: 1 }, 
             {
-                // Tham chiếu đến collection 'products' để lấy thông tin chi tiết
                 $lookup: {
                     from: 'products',
                     localField: '_id',
@@ -73,13 +51,12 @@ export const getTopProduct = async (req, res) => {
                     as: 'productDetails'
                 }
             },
-            { $unwind: "$productDetails" }, // Tách mảng kết quả $lookup
+            { $unwind: "$productDetails" }, 
             {
-                // Định dạng lại đầu ra
                 $project: {
                     _id: 0,
                     name: "$productDetails.name",
-                    image: { $arrayElemAt: ["$productDetails.image", 0] }, // Lấy ảnh đầu tiên
+                    image: { $arrayElemAt: ["$productDetails.image", 0] },
                     quantity: "$totalQuantity"
                 }
             }
@@ -97,27 +74,19 @@ export const getTopProduct = async (req, res) => {
     }
 };
 
-/**
- * @route   GET /api/stats/top-customer
- * @desc    Lấy khách hàng chi tiêu nhiều nhất
- * @access  Private (Admin)
- */
 export const getTopCustomer = async (req, res) => {
     try {
         const topCustomerAgg = await orderModel.aggregate([
-            { $match: { payment: true } }, // Chỉ tính các đơn hàng đã thanh toán
+            { $match: { payment: true } }, 
             {
                 $group: {
-                    // Gom nhóm dựa trên userId.
-                    // Chuyển đổi userId (String) thành ObjectId để $lookup
                     _id: { $toObjectId: "$userId" }, 
-                    totalSpent: { $sum: "$amount" } // Tính tổng số tiền đã chi tiêu
+                    totalSpent: { $sum: "$amount" } 
                 }
             },
-            { $sort: { totalSpent: -1 } }, // Sắp xếp giảm dần
-            { $limit: 1 }, // Lấy 1 khách hàng đầu tiên
+            { $sort: { totalSpent: -1 } }, 
+            { $limit: 1 }, 
             {
-                // Tham chiếu đến collection 'users' để lấy thông tin chi tiết
                 $lookup: {
                     from: 'users',
                     localField: '_id',
@@ -125,9 +94,8 @@ export const getTopCustomer = async (req, res) => {
                     as: 'customerDetails'
                 }
             },
-            { $unwind: "$customerDetails" }, // Tách mảng kết quả $lookup
+            { $unwind: "$customerDetails" }, 
             {
-                // Định dạng lại đầu ra
                 $project: {
                     _id: 0,
                     name: "$customerDetails.name",

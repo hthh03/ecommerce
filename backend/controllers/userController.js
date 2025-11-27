@@ -12,7 +12,6 @@ const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-// 🔹 User Login
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -35,7 +34,6 @@ const loginUser = async (req, res) => {
   }
 };
 
-// 🔹 User Register
 const registerUser = async (req, res) => {
   try {
     const { email, name, password } = req.body;
@@ -69,7 +67,6 @@ const registerUser = async (req, res) => {
   }
 };
 
-// 🔹 Admin Login
 const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -85,7 +82,6 @@ const adminLogin = async (req, res) => {
   }
 };
 
-// 🔹 Get Profile
 const getProfile = async (req, res) => {
   try {
     const user = await userModel.findById(req.userId).select("-password");
@@ -97,7 +93,6 @@ const getProfile = async (req, res) => {
   }
 };
 
-// 🔹 Update Profile (name + avatar + phone + address)
 const updateProfile = async (req, res) => {
   try {
     const { name, phone, address } = req.body;
@@ -126,18 +121,12 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// 🔹 Change Password
 const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
     const user = await userModel.findById(req.userId);
 
     if (!user) return res.json({ success: false, message: "User not found" });
-
-    // --- LOGIC KIỂM TRA MẬT KHẨU CŨ (QUAN TRỌNG) ---
-    // Điều kiện cần kiểm tra mật khẩu cũ:
-    // 1. User đăng ký bằng Email thường (authType !== 'google')
-    // 2. HOẶC User đăng ký bằng Google NHƯNG ĐÃ đặt mật khẩu rồi (isPasswordSet === true)
     
     const shouldCheckOldPass = user.authType !== 'google' || user.isPasswordSet;
 
@@ -146,19 +135,13 @@ const changePassword = async (req, res) => {
             return res.json({ success: false, message: "Current password is required" });
         }
         
-        // So sánh mật khẩu cũ với mật khẩu trong DB
         const isMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isMatch) {
-            return res.json({ success: false, message: "Current password is incorrect" }); // <-- Chặn đứng tại đây nếu sai pass
+            return res.json({ success: false, message: "Current password is incorrect" });
         }
     }
-    // --------------------------------------------------
-
-    // Nếu vượt qua kiểm tra trên thì mới cho đổi pass
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
-    
-    // Đánh dấu là đã có mật khẩu
     user.isPasswordSet = true;
 
     await user.save();
@@ -170,7 +153,6 @@ const changePassword = async (req, res) => {
   }
 };
 
-// 🔹 Forgot Password - Send New Password
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -189,15 +171,11 @@ const forgotPassword = async (req, res) => {
     };
 
     const newPassword = generateRandomPassword();
-    
-    // Hash mật khẩu mới và lưu vào database
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
     
     user.password = hashedPassword;
     await user.save();
-
-    // Gửi mail với mật khẩu mới
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 587,
@@ -251,21 +229,16 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// 🔹 Reset Password with Temporary Password
 const resetPassword = async (req, res) => {
   try {
     const { email, tempPassword, newPassword } = req.body;
 
     const user = await userModel.findOne({ email });
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
-
-    // So sánh mật khẩu tạm (được gửi email trước đó)
     const isMatch = await bcrypt.compare(tempPassword, user.password);
     if (!isMatch) {
       return res.json({ success: false, message: "Temporary password is incorrect" });
     }
-
-    // Hash mật khẩu mới
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     await user.save();
@@ -277,7 +250,6 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// Get all users (Admin only)
 const listUsers = async (req, res) => {
     try {
         const users = await userModel.find({}).select('-password').sort({ date: -1 })
@@ -294,7 +266,6 @@ const listUsers = async (req, res) => {
     }
 }
 
-// Block/Unblock user
 const blockUser = async (req, res) => {
     try {
         const { userId, block } = req.body
@@ -314,13 +285,9 @@ const blockUser = async (req, res) => {
     }
 }
 
-// Delete user
 const deleteUser = async (req, res) => {
     try {
         const { userId } = req.body
-        
-        // Optional: Also delete user's orders
-        // await orderModel.deleteMany({ userId })
         
         await userModel.findByIdAndDelete(userId)
         
@@ -337,7 +304,6 @@ const deleteUser = async (req, res) => {
     }
 }
 
-// Get user orders
 const getUserOrders = async (req, res) => {
     try {
         const { userId } = req.body
@@ -368,18 +334,14 @@ const googleLogin = async (req, res) => {
         });
         const payload = ticket.getPayload();
         const { email, name, picture } = payload; 
-
-        // Kiểm tra user
         let user = await userModel.findOne({ email });
 
         if (user) {
-            // Đã có -> Login
             if (!user.avatar) {
                 user.avatar = picture;
                 await user.save();
             }
         } else {
-            // Chưa có -> TẠO MỚI (Khắc phục lỗi User not found)
             const randomPassword = Math.random().toString(36).slice(-8);
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(randomPassword, salt);

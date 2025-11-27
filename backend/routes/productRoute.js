@@ -5,15 +5,13 @@ import {
     removeProduct, 
     singleProduct, 
     updateProduct,
-    listAllProductsAdmin, // <-- Đã import
-    toggleProductStatus   // <-- Đã import
+    listAllProductsAdmin, 
+    toggleProductStatus   
 } from '../controllers/productController.js'
 import upload from '../middleware/multer.js'
 import adminAuth from '../middleware/adminAuth.js'
 
 const productRouter = express.Router();
-
-// Các route của Admin (yêu cầu adminAuth)
 productRouter.post('/add', adminAuth,
     upload.fields([{name:'image1',maxCount:1},
                     {name:'image2',maxCount:1},
@@ -29,13 +27,8 @@ productRouter.post('/update', adminAuth, upload.fields([
     ]), updateProduct);
 
 productRouter.post('/remove', adminAuth, removeProduct);
-
 productRouter.post('/admin-list', adminAuth, listAllProductsAdmin);
-
 productRouter.post('/toggle-status', adminAuth, toggleProductStatus);
-
-
-// Các route Công khai (cho khách hàng)
 productRouter.post('/single',singleProduct);
 productRouter.get('/list',listProducts);
 

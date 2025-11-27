@@ -18,7 +18,6 @@ userRouter.post('/forgot-password', forgotPassword);
 userRouter.post('/reset-password', resetPassword);
 userRouter.post('/google-login', googleLogin);
 
-// Admin routes for user management
 userRouter.post('/list', adminAuth, listUsers)
 userRouter.post('/block', adminAuth, blockUser)
 userRouter.post('/delete', adminAuth, deleteUser) 

@@ -1,8 +1,6 @@
 import {v2 as cloudinary} from 'cloudinary'
 import productModel from '../models/productModel.js'
 
-
-// function for add product
 const addProduct = async (req, res) => {
     try {
         const {name, description, price, category, subCategory, sizes, bestseller} = req.body;
@@ -32,7 +30,7 @@ const addProduct = async (req, res) => {
             bestseller: bestseller === "true" ? true : false,
             sizes: parsedSizes,
             image: imagesUrl,
-            isActive: true, // Mặc định là active khi thêm mới
+            isActive: true, 
             date: Date.now()
         }
 
@@ -46,8 +44,6 @@ const addProduct = async (req, res) => {
     }
 }
 
-// function for list product (CHO KHÁCH HÀNG)
-// Chỉ trả về các sản phẩm đang 'Active'
 const listProducts = async (req,res) => {
     try {
         const products = await productModel.find({ isActive: true });
@@ -58,19 +54,16 @@ const listProducts = async (req,res) => {
     }
 }
 
-// function for list ALL product (CHO ADMIN)
-// Trả về tất cả sản phẩm, kể cả sản phẩm 'Disabled'
 const listAllProductsAdmin = async (req,res) => {
     try {
         const products = await productModel.find({});
         res.json({success:true,products})
-    } catch (error) { // <-- Lỗi cú pháp đã được sửa ở đây
+    } catch (error) { 
         console.log(error)
         res.json({success: false, message: error.message})
     }
 }
 
-// function for remove product 
 const removeProduct = async (req,res) => {
     try {
         await productModel.findByIdAndDelete(req.body.id)
@@ -81,7 +74,6 @@ const removeProduct = async (req,res) => {
     }
 }
 
-// function for single product info 
 const singleProduct = async (req,res) => {
     try{
         const {productId} = req.body
@@ -94,7 +86,6 @@ const singleProduct = async (req,res) => {
     }
 }
 
-// function for toggle product active status (HÀM MỚI)
 const toggleProductStatus = async (req,res) => {
     try {
         const { productId, status } = req.body;
@@ -106,13 +97,9 @@ const toggleProductStatus = async (req,res) => {
     }
 }
 
-// function for update product (ĐÃ CẬP NHẬT)
 const updateProduct = async (req, res) => {
     try {
-        // Thêm 'isActive'
         const { id, name, description, price, category, subCategory, bestseller, sizes, isActive } = req.body;
-
-        // Tìm product cần update
         const product = await productModel.findById(id);
         if (!product) {
             return res.json({ success: false, message: "Product not found" });
@@ -120,7 +107,6 @@ const updateProduct = async (req, res) => {
 
         const parsedSizes = JSON.parse(sizes);
 
-        // Prepare update data
         const updateData = {
             name,
             description, 
@@ -129,14 +115,12 @@ const updateProduct = async (req, res) => {
             subCategory,
             bestseller: bestseller === "true" ? true : false,
             sizes: parsedSizes,
-            isActive: isActive === 'true' ? true : false, // Chuyển đổi string từ form-data
+            isActive: isActive === 'true' ? true : false, 
             date: Date.now()
         };
 
-        // Handle image updates với Cloudinary
-        let imagesUrl = [...product.image]; // Keep existing images
+        let imagesUrl = [...product.image]; 
 
-        // Check for new images
         const image1 = req.files.image1 && req.files.image1[0];
         const image2 = req.files.image2 && req.files.image2[0];
         const image3 = req.files.image3 && req.files.image3[0];
@@ -144,7 +128,6 @@ const updateProduct = async (req, res) => {
 
         const newImages = [image1, image2, image3, image4];
 
-        // Upload new images to cloudinary
         for (let i = 0; i < newImages.length; i++) {
             if (newImages[i]) {
                 let result = await cloudinary.uploader.upload(newImages[i].path, {resource_type: 'image'});
@@ -153,8 +136,6 @@ const updateProduct = async (req, res) => {
         }
 
         updateData.image = imagesUrl;
-
-        // Update product in database
         const updatedProduct = await productModel.findByIdAndUpdate(id, updateData, { new: true });
 
         res.json({ success: true, message: "Product updated successfully", product: updatedProduct });
@@ -171,6 +152,6 @@ export {
     removeProduct, 
     singleProduct, 
     updateProduct,
-    listAllProductsAdmin, // Export hàm mới
-    toggleProductStatus   // Export hàm mới
+    listAllProductsAdmin, 
+    toggleProductStatus   
 }

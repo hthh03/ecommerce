@@ -27,9 +27,6 @@ const Dashboard = ({ token }) => {
     if (!token) return
     setLoading(true)
     try {
-      // 1. Fetch Dữ liệu cơ bản (Đơn hàng, Doanh thu, Người dùng)
-      // GIẢ ĐỊNH: Bạn cần tạo endpoint này ở backend
-      // Nó nên trả về: { success: true, totalOrders: 100, totalRevenue: 5000, totalUsers: 25 }
       const statsResponse = await axios.get(backendUrl + '/api/stats/summary', { headers: { token } })
       
       if (statsResponse.data.success) {
@@ -42,18 +39,12 @@ const Dashboard = ({ token }) => {
         toast.error("Failed to fetch summary data")
       }
 
-      // 2. Fetch Sản phẩm bán chạy nhất
-      // GIẢ ĐỊNH: Bạn cần tạo endpoint này ở backend
-      // Nó nên trả về: { success: true, product: { name: 'Gold Ring', quantity: 150, image: '...' } }
       const topProductResponse = await axios.get(backendUrl + '/api/stats/top-product', { headers: { token } })
       
       if (topProductResponse.data.success) {
         setTopProduct(topProductResponse.data.product)
       }
 
-      // 3. Fetch Khách hàng mua nhiều nhất
-      // GIẢ ĐỊNH: Bạn cần tạo endpoint này ở backend
-      // Nó nên trả về: { success: true, customer: { name: 'Jane Doe', email: 'jane@example.com', totalSpent: 500 } }
       const topCustomerResponse = await axios.get(backendUrl + '/api/stats/top-customer', { headers: { token } })
       
       if (topCustomerResponse.data.success) {
@@ -63,7 +54,6 @@ const Dashboard = ({ token }) => {
     } catch (error) {
       toast.error("Error loading dashboard data")
       console.error(error)
-      // Sử dụng dữ liệu mẫu nếu API lỗi để bạn có thể thấy giao diện
       setStats({ totalOrders: 'N/A', totalRevenue: 'N/A', totalUsers: 'N/A' })
       setTopProduct({ name: 'Sample Product', quantity: 'N/A', image: 'https://via.placeholder.com/100' })
       setTopCustomer({ name: 'Sample Customer', email: 'sample@test.com', totalSpent: 'N/A' })
@@ -103,10 +93,8 @@ const Dashboard = ({ token }) => {
         />
       </div>
 
-      {/* Báo cáo chi tiết */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Sản phẩm bán chạy nhất */}
         <div className="bg-white p-6 rounded-lg shadow border">
           <h4 className="font-semibold mb-4 text-gray-800">🏆 Best Selling Product</h4>
           {topProduct ? (
@@ -122,7 +110,6 @@ const Dashboard = ({ token }) => {
           )}
         </div>
 
-        {/* Khách hàng mua nhiều nhất */}
         <div className="bg-white p-6 rounded-lg shadow border">
           <h4 className="font-semibold mb-4 text-gray-800">🥇 Top Customer</h4>
           {topCustomer ? (

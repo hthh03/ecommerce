@@ -96,8 +96,6 @@ const Profile = () => {
 
   const handleChangePassword = async (event) => {
     event.preventDefault();
-    
-    // Validation cơ bản
     if (newPassword !== confirmPassword) {
       toast.error("New passwords do not match");
       return;
@@ -106,10 +104,6 @@ const Profile = () => {
       toast.error("New password must be at least 6 characters");
       return;
     }
-
-    // Logic kiểm tra Old Password:
-    // Nếu là 'local' user thì BẮT BUỘC phải có oldPassword
-    // Nếu là 'google' user thì KHÔNG CẦN
     if (user.authType !== 'google' && !oldPassword) {
         toast.error("Please enter your current password");
         return;
@@ -118,7 +112,7 @@ const Profile = () => {
     try {
       const response = await axios.put(
         backendUrl + "/api/user/change-password",
-        { oldPassword, newPassword }, // Gửi cả 2, backend sẽ tự quyết định có check oldPassword hay ko
+        { oldPassword, newPassword },
         { headers: { token } }
       );
       if (response.data.success) {
@@ -175,9 +169,7 @@ const Profile = () => {
             </p>
           </div>
 
-          {/* Right Side - Tabs + Forms */}
           <div className="lg:col-span-2">
-            {/* Tab Navigation */}
             <div className="flex border-b mb-6">
               <button
                 className={`px-6 py-3 font-medium transition-colors ${
@@ -396,7 +388,6 @@ const Profile = () => {
                         newPassword !== confirmPassword || 
                         !newPassword || 
                         !confirmPassword || 
-                        // Nếu đã có pass (isPasswordSet=true) thì bắt buộc phải nhập oldPassword
                         ((user.authType !== 'google' || user.isPasswordSet) && !oldPassword)
                     }
                 >

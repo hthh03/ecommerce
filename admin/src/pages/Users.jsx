@@ -114,7 +114,7 @@ const Users = ({token}) => {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* User Info */}
+
           <div className="xl:col-span-1 bg-white p-4 sm:p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-4">User Information</h3>
             <div className="space-y-3">
@@ -149,7 +149,6 @@ const Users = ({token}) => {
             </div>
           </div>
 
-          {/* Orders */}
           <div className="xl:col-span-2 bg-white p-4 sm:p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-4">Recent Orders</h3>
             {selectedUser.orders && selectedUser.orders.length > 0 ? (
@@ -181,7 +180,7 @@ const Users = ({token}) => {
 
   return (
     <div className="p-4 sm:p-6">
-      {/* Header */}
+
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h3 className="text-xl sm:text-2xl font-semibold">User Management</h3>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -198,9 +197,7 @@ const Users = ({token}) => {
         </div>
       </div>
 
-      {/* Desktop Table View */}
       <div className="hidden lg:flex flex-col gap-2">
-        {/* Table Header */}
         <div className="grid grid-cols-[2fr_3fr_2fr_2fr_2fr] items-center py-3 px-4 border bg-gray-100 text-sm font-semibold rounded-lg">
           <span>Name</span>
           <span>Email</span>
@@ -209,24 +206,19 @@ const Users = ({token}) => {
           <span className="text-center">Actions</span>
         </div>
 
-        {/* Table Body */}
         {filteredUsers.map((user, index) => (
           <div
             key={index}
             className="grid grid-cols-[2fr_3fr_2fr_2fr_2fr] items-center gap-2 py-3 px-4 border text-sm hover:bg-gray-50 rounded-lg transition-colors"
           >
-            {/* Name */}
             <span className="text-gray-700 font-medium truncate">{user.name || "—"}</span>
 
-            {/* Email */}
             <span className="text-gray-500 text-xs truncate">{user.email}</span>
 
-            {/* Join Date */}
             <span className="font-semibold text-gray-700">
               {new Date(user.date).toLocaleDateString()}
             </span>
 
-            {/* Status */}
             <span
               className={`px-2 py-1 rounded text-xs font-medium ${
                 user.blocked
@@ -237,7 +229,6 @@ const Users = ({token}) => {
               {user.blocked ? "Blocked" : "Active"}
             </span>
 
-            {/* Actions */}
             <div className="flex justify-center space-x-2">
               <button
                 onClick={() => getUserOrders(user._id)}
@@ -266,14 +257,12 @@ const Users = ({token}) => {
         ))}
       </div>
 
-      {/* Mobile/Tablet Card View */}
       <div className="lg:hidden space-y-4">
         {filteredUsers.map((user, index) => (
           <div
             key={index}
             className="bg-white p-4 rounded-lg shadow border hover:shadow-md transition-shadow"
           >
-            {/* User Header */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
               <div className="flex-1 min-w-0">
                 <h4 className="font-medium text-gray-900 truncate">{user.name || "—"}</h4>
@@ -290,12 +279,10 @@ const Users = ({token}) => {
               </span>
             </div>
 
-            {/* User Info */}
             <div className="text-sm text-gray-600 mb-4">
               <p>Joined: {new Date(user.date).toLocaleDateString()}</p>
             </div>
 
-            {/* Actions */}
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => getUserOrders(user._id)}
@@ -324,7 +311,6 @@ const Users = ({token}) => {
         ))}
       </div>
 
-      {/* No Users Found */}
       {filteredUsers.length === 0 && (
         <div className="text-center py-12 text-gray-500">
           <div className="text-lg mb-2">

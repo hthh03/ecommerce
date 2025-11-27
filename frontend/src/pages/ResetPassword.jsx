@@ -13,7 +13,7 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ new: false, confirm: false });
 
-  const backendUrl = "http://localhost:4000"; // đổi theo server của bạn
+  const backendUrl = "http://localhost:4000"; 
 
   const handleChange = (e) => {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
@@ -70,7 +70,6 @@ const ResetPassword = () => {
         <hr className="border-none h-[1.5px] w-8 bg-gray-800" />
       </div>
 
-      {/* Temporary Password */}
       <input
         type="password"
         name="tempPassword"
@@ -82,7 +81,6 @@ const ResetPassword = () => {
         disabled={isLoading}
       />
 
-      {/* New Password */}
       <div className="relative w-full">
         <input
           type={showPassword.new ? "text" : "password"}
@@ -113,7 +111,6 @@ const ResetPassword = () => {
         </button>
       </div>
 
-      {/* Confirm Password */}
       <div className="relative w-full">
         <input
           type={showPassword.confirm ? "text" : "password"}

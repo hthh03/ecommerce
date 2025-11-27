@@ -5,18 +5,15 @@ import { toast } from 'react-toastify'
 import { backendUrl, currency } from '../App'
 
 const ProductManager = ({ token }) => {
-  // State chung
-  const [list, setList] = useState([]) // Danh sách đầy đủ từ API
-  const [filteredList, setFilteredList] = useState([]) // Danh sách hiển thị sau khi lọc
+  const [list, setList] = useState([]) 
+  const [filteredList, setFilteredList] = useState([])
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [editMode, setEditMode] = useState(false)
   
   // State cho bộ lọc
   const [selectedSubCategory, setSelectedSubCategory] = useState("All")
   const [subCategoryList, setSubCategoryList] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(""); // <-- STATE MỚI: Cho tìm kiếm
-
-  // State cho form edit (Bao gồm cả isActive)
+  const [searchTerm, setSearchTerm] = useState(""); 
   const [image1, setImage1] = useState(false)
   const [image2, setImage2] = useState(false)
   const [image3, setImage3] = useState(false)
@@ -28,9 +25,8 @@ const ProductManager = ({ token }) => {
   const [subCategory, setSubCategory] = useState("Ring")
   const [bestseller, setBestseller] = useState(false)
   const [sizes, setSizes] = useState([{ size: '', stock: '' }]);
-  const [isActive, setIsActive] = useState(true); // State cho bật/tắt
+  const [isActive, setIsActive] = useState(true); 
 
-  // Lấy danh sách SubCategory (Không đổi)
   const fetchSubCategories = async () => {
     try {
         const response = await axios.get(`${backendUrl}/api/subcategory/list`);
@@ -43,7 +39,6 @@ const ProductManager = ({ token }) => {
     }
   };
 
-  // Lấy danh sách sản phẩm (Sử dụng route 'admin-list')
   const fetchList = async () => {
     try {
         const response = await axios.post(`${backendUrl}/api/product/admin-list`, {}, { headers: { token } });
@@ -58,16 +53,11 @@ const ProductManager = ({ token }) => {
     }
   };
 
-  // ---- LOGIC LỌC & TÌM KIẾM MỚI ----
   useEffect(() => {
     let tempFilteredList = [...list];
-
-    // 1. Lọc theo SubCategory
     if (selectedSubCategory !== "All") {
         tempFilteredList = tempFilteredList.filter(item => item.subCategory === selectedSubCategory);
     }
-
-    // 2. Lọc theo Tên (Tìm kiếm)
     if (searchTerm.trim() !== "") {
         tempFilteredList = tempFilteredList.filter(item => 
             item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -76,15 +66,11 @@ const ProductManager = ({ token }) => {
 
     setFilteredList(tempFilteredList);
 
-  }, [list, selectedSubCategory, searchTerm]); // Chạy lại khi 3 state này thay đổi
-
-  // Hàm này giờ chỉ cần cập nhật state
+  }, [list, selectedSubCategory, searchTerm]); 
   const filterBySubCategory = (subCat) => {
     setSelectedSubCategory(subCat);
   };
-  // ---- KẾT THÚC LOGIC LỌC ----
 
-  // Xóa sản phẩm (Không đổi)
   const removeProduct = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
         try {
@@ -102,7 +88,6 @@ const ProductManager = ({ token }) => {
     }
   };
 
-  // Hàm bật/tắt sản phẩm (HÀM MỚI)
   const handleToggleStatus = async (productId, currentStatus) => {
     const newStatus = !currentStatus;
     const action = newStatus ? 'Enable' : 'Disable';
@@ -116,7 +101,7 @@ const ProductManager = ({ token }) => {
             
             if (response.data.success) {
                 toast.success(response.data.message);
-                await fetchList(); // Tải lại danh sách
+                await fetchList();
             } else {
                 toast.error(response.data.message);
             }
@@ -127,7 +112,6 @@ const ProductManager = ({ token }) => {
     }
   };
 
-  // Chọn sản phẩm để sửa (Đã cập nhật)
   const selectProductForEdit = (product) => {
     setSelectedProduct(product)
     setEditMode(true)
@@ -138,12 +122,11 @@ const ProductManager = ({ token }) => {
     setSubCategory(product.subCategory)
     setBestseller(product.bestseller)
     setSizes(product.sizes)
-    setIsActive(product.isActive ?? true); // Cập nhật isActive
+    setIsActive(product.isActive ?? true); 
     setImage1(false); setImage2(false); setImage3(false); setImage4(false);
     setEditMode(true)
   }
 
-   // Handlers cho size (Không đổi)
     const handleSizeChange = (index, event) => {
         const values = [...sizes];
         values[index][event.target.name] = event.target.value;
@@ -158,7 +141,6 @@ const ProductManager = ({ token }) => {
         setSizes(values);
     };
 
-  // Cập nhật sản phẩm (Đã cập nhật)
   const onUpdateHandler = async (e) => {
     e.preventDefault()
     try {
@@ -171,7 +153,7 @@ const ProductManager = ({ token }) => {
       formData.append("subCategory", subCategory)
       formData.append("bestseller", bestseller.toString())
       formData.append("sizes", JSON.stringify(sizes))
-      formData.append("isActive", isActive); // Gửi trạng thái active
+      formData.append("isActive", isActive); 
 
       image1 && formData.append("image1", image1)
       image2 && formData.append("image2", image2)
@@ -194,7 +176,6 @@ const ProductManager = ({ token }) => {
     }
   }
 
-  // Hủy edit (Đã cập nhật)
   const cancelEdit = () => {
     setEditMode(false)
     setSelectedProduct(null)
@@ -205,7 +186,7 @@ const ProductManager = ({ token }) => {
     setSubCategory("Ring")
     setBestseller(false)
     setSizes([])
-    setIsActive(true) // Reset isActive
+    setIsActive(true) 
     setImage1(false); setImage2(false); setImage3(false); setImage4(false);
   }
 
@@ -225,7 +206,6 @@ const ProductManager = ({ token }) => {
         <div>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
             <h1 className="text-xl sm:text-2xl font-bold">Product Management</h1>
-            {/* ---- THANH TÌM KIẾM MỚI ---- */}
             <input
                 type="text"
                 placeholder="Search by product name..."
@@ -238,8 +218,6 @@ const ProductManager = ({ token }) => {
               <span>Showing: {filteredList.length}</span>
             </div>
           </div>
-
-          {/* Nút lọc (Không đổi) */}
           <div className="mb-6 border-b pb-4">
            <div className="flex flex-wrap gap-2">
               <button
@@ -266,19 +244,16 @@ const ProductManager = ({ token }) => {
             </div>
           </div>
 
-          {/* Bảng Desktop (Đã cập nhật) */}
           <div className="hidden lg:flex flex-col gap-2">
-            {/* Header */}
             <div className="grid grid-cols-[1fr_3fr_1fr_1fr_1fr_2fr] items-center py-3 px-4 border bg-gray-100 text-sm font-semibold rounded-lg">
               <span>Image</span>
               <span>Name</span>
               <span>Category</span>
               <span>Price</span>
-              <span>Status</span> {/* <-- CỘT MỚI */}
+              <span>Status</span> 
               <span className="text-center">Actions</span>
             </div>
 
-            {/* Body */}
             {filteredList.length > 0 ? (
               filteredList.map((item, index) => (
                 <div className="grid grid-cols-[1fr_3fr_1fr_1fr_1fr_2fr] items-center gap-2 py-3 px-4 border text-sm hover:bg-gray-50 rounded-lg transition-colors" key={index}>
@@ -290,14 +265,12 @@ const ProductManager = ({ token }) => {
                   <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{item.category}</span>
                   <span className="font-semibold text-green-600">{currency}{item.price}</span>
                   
-                  {/* CỘT MỚI: Hiển thị Status */}
                   <span className={`px-2 py-1 rounded-full text-xs font-medium text-center ${
                     item.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
                     {item.isActive ? 'Active' : 'Disabled'}
                   </span>
 
-                  {/* CỘT MỚI: Nút Bật/Tắt */}
                   <div className="flex gap-2 justify-center">
                     <button 
                       onClick={() => handleToggleStatus(item._id, item.isActive)}
@@ -329,7 +302,6 @@ const ProductManager = ({ token }) => {
             )}
           </div>
 
-          {/* Thẻ Mobile/Tablet (Đã cập nhật) */}
           <div className="lg:hidden space-y-4">
             {filteredList.length > 0 ? (
               filteredList.map((item, index) => (
@@ -340,7 +312,6 @@ const ProductManager = ({ token }) => {
                       <h3 className="font-medium text-gray-900 text-sm sm:text-base mb-1 break-words">{item.name}</h3>
                       <p className="text-xs text-gray-500 mb-2">{item.subCategory}</p>
                       <div className="flex flex-wrap gap-2 items-center">
-                        {/* THẺ MỚI: Hiển thị Status */}
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           item.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
@@ -357,7 +328,6 @@ const ProductManager = ({ token }) => {
                   <div className="mb-4 text-xs text-gray-600">
                     <p className="line-clamp-2">{item.description}</p>
                   </div>
-                  {/* NÚT MỚI: Bật/Tắt */}
                   <div className="flex gap-2">
                     <button 
                       onClick={() => handleToggleStatus(item._id, item.isActive)}
@@ -391,7 +361,6 @@ const ProductManager = ({ token }) => {
           </div>
         </div>
       ) : (
-        // Form Edit (Đã cập nhật)
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
             <div className="flex-1">
@@ -407,7 +376,6 @@ const ProductManager = ({ token }) => {
           </div>
 
           <form onSubmit={onUpdateHandler} className='flex flex-col w-full items-start gap-4 sm:gap-6 bg-white p-4 sm:p-6 rounded-lg border'>
-            {/* Product Images */}
             <div className="w-full">
               <p className='mb-3 font-medium text-sm sm:text-base'>Product Images (Optional - Click to change)</p>
               <div className='grid grid-cols-2 sm:flex gap-3'>
@@ -430,7 +398,6 @@ const ProductManager = ({ token }) => {
               </div>
             </div>
 
-            {/* Product Name */}
             <div className='w-full'>
               <p className='mb-2 font-medium text-sm sm:text-base'>Product Name</p>
               <input 
@@ -443,7 +410,6 @@ const ProductManager = ({ token }) => {
               />
             </div>
 
-            {/* Product Description */}
             <div className='w-full'>
               <p className='mb-2 font-medium text-sm sm:text-base'>Product Description</p>
               <textarea 
@@ -456,7 +422,6 @@ const ProductManager = ({ token }) => {
               />
             </div>
 
-            {/* Category, SubCategory, Price */}
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full'>
               <div>
                 <p className='mb-2 font-medium text-sm sm:text-base'>Category</p>
@@ -512,7 +477,6 @@ const ProductManager = ({ token }) => {
               </div>
             </div>
 
-            {/* Sizes */}
             <div className="w-full">
                 <p className='mb-2 font-medium'>Available Sizes & Stock</p>
                         {sizes.map((sizeField, index) => (
@@ -525,13 +489,11 @@ const ProductManager = ({ token }) => {
                <button type="button" onClick={addSizeField} className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">+ Add Size</button>
             </div>
 
-            {/* Bestseller Checkbox */}
             <div className='flex items-center gap-2'>
               <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type='checkbox' id='bestseller' className="w-4 h-4" />
               <label className='cursor-pointer font-medium' htmlFor='bestseller'>Mark as Bestseller</label>
             </div>
             
-            {/* CHECKBOX MỚI: Trạng thái Active */}
             <div className='flex items-center gap-2'>
               <input onChange={() => setIsActive(prev => !prev)} checked={isActive} type='checkbox' id='isActive' className="w-4 h-4" />
               <label className='cursor-pointer font-medium' htmlFor='isActive'>
@@ -539,7 +501,6 @@ const ProductManager = ({ token }) => {
               </label>
             </div>
             
-            {/* Action Buttons (Không đổi) */}
             <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full sm:w-auto">
               <button 
                 type="submit" 
